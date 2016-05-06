@@ -1,4 +1,4 @@
-AttachSpec("/Users/guillem/ResolutionDim2/Magma/ResolutionDim2.m");
+AttachSpec("/Users/guillem/IntegralClosureDim2/IntegralClosureDim2.m");
 Q<x, y> := LocalPolynomialRing(RationalField(), 2, "lglex");
 
 function JacobiIdeal1(f)
