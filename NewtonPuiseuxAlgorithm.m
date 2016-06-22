@@ -130,19 +130,17 @@ require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   P := LocalPolynomialRing(AlgebraicClosure(
     CoefficientRing(Parent(f))), 2, "lglex");
   // If Nf start on the right of the x-axis, we have an x-factor.
-  yBranch := (xFactor(f) gt 0) select [* <Parent(f).1, P.1> *] else [* *];
+  yBranch := (xFactor(f) gt 0) select [<Parent(f).1, P.1>] else [];
 
   S := yBranch cat SequenceToList(NewtonPuiseuxAlgorithmReducedLoop(
     P!SquarefreePart(f), 1, Terms - 1));
-  if Polynomial then return S; else return [* s[1] : s in S *]; end if;
+  if Polynomial then return S; else return [s[1] : s in S]; end if;
 end intrinsic;
 
 intrinsic NewtonPuiseuxAlgorithmExpandReduced(s::RngSerPuisElt, f::RngMPolLocElt
-                                             : Terms := 1,
-                                               Polynomial := false) -> [ ]
+                                             : Terms := 1, Polynomial := false) -> [ ]
 { Expands the Puiseux expansion s of a reduced bivariate polynomial }
 require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
-
   n := ExponentDenominator(s); x := Parent(s).1;
   m := s eq 0 select 0 else Degree(s);
   S := Terms gt 0 select NewtonPuiseuxAlgorithmReducedLoop(f, n, Terms - 1)
@@ -152,14 +150,14 @@ require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
     x^(1/n)), Infinity()), si[2]> : si in S];
   else return [s + x^m*ChangePrecision(Composition(si[1], x^(1/n)), Infinity())
     : si in S]; end if;
-end intrinsic
+end intrinsic;
 
 intrinsic NewtonPuiseuxAlgorithmExpandReduced(x::RngMPolLocElt, f::RngMPolLocElt
-                                              : Terms := 1) -> [ ]
+                                              : Terms := 1, Polynomial := false) -> [ ]
 { Expands the Puiseux expansion s of a reduced bivariate polynomial }
 require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
-  return [x];
-end intrinsic
+  if Polynomial then return [<x, x>]; else return [x]; end if;
+end intrinsic;
 
 NewtonPuiseuxAlgorithmReducedLoop := function(f, ord, terms)
   Q<x> := PuiseuxSeriesRing(CoefficientRing(Parent(f)));

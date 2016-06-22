@@ -17,7 +17,7 @@ ExpandWeightedCluster := procedure(~P, ~EE, ~CC, ~S, b)
   P := InsertBlock(ScalarMatrix(Ncols(P) + 1, 1), P, 1, 1);
   // Expand branches multiplicities.
   EE := [InsertBlock(ZeroMatrix(IntegerRing(), 1, Ncols(P)), EEi, 1, 1) : EEi in EE];
-  if b ne -1 then EE[b][Ncols(P)] := 1; end if;
+  if b ne -1 then EE[b][1, Ncols(P)] := 1; end if;
   // If a free points, expand the Puiseux series.
   if b ne -1 then
     // Number of points of branch b appearing in BP(I)
@@ -25,9 +25,9 @@ ExpandWeightedCluster := procedure(~P, ~EE, ~CC, ~S, b)
     // If we do not have enough terms of Puiseux already computed...
     if #CC[b] lt m + 1 then
       TEMP := NewtonPuiseuxAlgorithmExpandReduced(S[b][1], S[b][3]:
-        Terms := m + 1 - #CC[b])[1];
-      S[b][1] := TEMP[1][1]; S[b][3] := TEMP[1][3];
-      CC[b] := CoefficientsVectorBranch(CC[b], m + 1);
+        Terms := m + 1 - #CC[b], Polynomial := true)[1];
+      S[b][1] := TEMP[1]; S[b][3] := TEMP[2];
+      CC[b] := CoefficientsVectorBranch(S[b][1], m + 1);
     end if; // Append the new coefficient to the cluster's coeffs.
   // Otherwise, just add Infinity coefficients.
   end if;
@@ -81,7 +81,7 @@ require Rank(Parent(Representative(I))) eq 2:
 
   // ------------ Add new free points ------------------
   lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
-  points2test := #lastFree - 1; idx := 1;
+  points2test := #lastFree; idx := 1;
   // For each last free point on a branch...
   while points2test gt 0 do
     // Values for each gen. at p.
@@ -95,7 +95,7 @@ require Rank(Parent(Representative(I))) eq 2:
       assert(#[i : i in [1..#EE] | EE[i][1, p] ne 0] eq 1);
       b := [i : i in [1..#EE] | EE[i][1, p] ne 0][1];
       ExpandWeightedCluster(~P, ~EE, ~CC, ~S, b); P[Ncols(P)][p] := -1;
-      ComputeBasePointsData(~P, ~EE, ~CC, ~S, #G, ~E, ~B, ~C, ~V, ~v); // Recompute.
+      ComputeBasePointsData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v); // Recompute.
       // We may need to add more free points after the points we added.
       lastFree cat:= [Ncols(P)]; points2test := points2test + 1;
     end if;
