@@ -9,12 +9,6 @@ function JacobiIdeal2(f)
   return ideal<Q | f, Derivative(f, 1), Derivative(f, 2)>;
 end function;
 
-function JacobiIdeal3(f)
-  x := Parent(f).1; y := Parent(f).2;
-  return ideal<Q | f, x*Derivative(f, 1), x*Derivative(f, 2), y*Derivative(f, 1), y*Derivative(f, 2)>;
-end function;
-
-
 // Casas' book example.
 book := y^4 - x^2*y^2 - 2*x^4*y^2 + x^4*y + x^5*y + x^7;
 
