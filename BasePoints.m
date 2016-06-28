@@ -77,7 +77,7 @@ require Rank(Parent(Representative(I))) eq 2:
   v := []; // Virtual values of BP(I).
   ComputeBasePointsData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
 
-  //print [* P, EE, E, V, v, CC, C*];
+  //print [*P, EE, E, V, v, CC, C*];
 
   // ------------ Add new free points ------------------
   lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
