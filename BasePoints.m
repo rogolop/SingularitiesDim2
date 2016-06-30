@@ -28,8 +28,7 @@ ExpandWeightedCluster := procedure(~P, ~EE, ~CC, ~S, b)
         Terms := m + 1 - #CC[b], Polynomial := true)[1];
       S[b][1] := TEMP[1]; S[b][3] := TEMP[2];
       CC[b] := CoefficientsVectorBranch(S[b][1], m + 1);
-    end if; // Append the new coefficient to the cluster's coeffs.
-  // Otherwise, just add Infinity coefficients.
+    end if;
   end if;
 end procedure;
 

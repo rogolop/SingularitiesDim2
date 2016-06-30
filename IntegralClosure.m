@@ -45,6 +45,35 @@ SharplyCurve := function(P, v, c, Q)
   end for; return WeierstrassEquation(s, Q);
 end function;
 
+Curvettes := function(P, v, c, Q)
+  C := []; q := Ncols(P);
+  // While q different from the origin.
+  while q ne 1 do
+    Iq := [1..q]; P := Submatrix(P, Iq, Iq); N := Ncols(P);
+    isFreeOrSat := &+[Transpose(P)[i] : i in [1..N]];
+    // Find last free point in the cluster.
+    p := [i : i in Reverse([1..N]) | isFreeOrSat[i] eq 0][1];
+    // Compute the irreducible cluster K(p) ending at p.
+    Ip := [1..p]; P := Submatrix(P, Ip, Ip); c := c[Ip];
+    v := ZeroMatrix(IntegerRing(), 1, #Ip); v[1][#Ip] := 1;
+    v := v * (Transpose(P) * P)^-1; // Values for K(p).
+    // Compute the sharply curve through K(p)..
+    C cat:= [SharplyCurve(P, v, c, Q)];
+    // Either the first sat after p or the origin.
+    q := [i : i in Reverse([1..p]) | Abs(isFreeOrSat[i]) eq 1][1];
+  end while;
+  Reverse(~C); return [C[1] eq Q.2 select Q.1 else Q.2] cat C;
+end function;
+
+intrinsic FooBar(f::RngMPolLocElt) -> RngMPolLocElt
+{ }
+  P := ProximityMatrix(f: Coefficients := true);
+  e := P[2]; c := P[3]; P := P[1];
+  v := e * Transpose(P^-1);
+  Q<x, y> := LocalPolynomialRing(Parent(c[1]), 2, "lglex");
+  return Curvettes(P, v, c, Q);
+end intrinsic;
+
 Unloading := function(P, v)
   N := Transpose(P)*P; n := Ncols(P); ZZ := IntegerRing();
   while #[r : r in Eltseq(v*N) | r lt 0] gt 0 do
@@ -91,7 +120,11 @@ IntegralClosureImpl := function(P, v, c, Q)
     else II[1] : i in [1..#II]][#II])^m;
 end function;
 
-intrinsic IntegralClosure(I::RngMPolLoc: StdBasis := false) -> RngMPolLoc
+IntegralClosureIrreducible := function(P, v, c, Q)
+
+end function;
+
+intrinsic IntegralClosure(I::RngMPolLoc) -> RngMPolLoc
 { Computes the integral closure of a bivariate polynomial ideal }
 require Type(Representative(I)) eq RngMPolLocElt:
   "Argument must be a polynomial ideal";
@@ -101,12 +134,12 @@ require Rank(Parent(Representative(I))) eq 2:
   B := BasePoints(I : Coefficients := true);
   P := B[1]; v := B[2]; f := B[3]; c := B[4];
   if Ncols(P) eq 0 then return ideal<Parent(f) | f>; end if;
-  // Factorize the cluster of base points and start recursion.
-  Q<x, y> := LocalPolynomialRing(Parent(c[1]), 2, "lglex");
-  II := [ IntegralClosureImpl(K[1], K[2], K[3], Q) :
-    K in ClusterFactorization(P, v, c) ];
-  // Multiply by the affine part and return the std basis if requested.
-  J := ideal<Q | f>*CleanIdeal([i gt 1 select Self(i - 1)*II[i]
-    else II[1] : i in [1..#II]][#II]);
-  if StdBasis then return StandardBasis(J); else return J; end if;
+
+  return ClusterFactorization(P, v, c);
+  //Q<x, y> := LocalPolynomialRing(Parent(c[1]), 2, "lglex");
+  //II := [ IntegralClosureIrreducible(K[1], K[2], K[3], Q) :
+  //  K in ClusterFactorization(P, v, c) ];
+  //// Multiply by the affine part and return the std basis if requested.
+  //J := ideal<Q | f>*CleanIdeal([i gt 1 select Self(i - 1)*II[i]
+  //  else II[1] : i in [1..#II]][#II]);
 end intrinsic;
