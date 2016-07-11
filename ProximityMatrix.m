@@ -14,6 +14,14 @@ intrinsic ZeroMatrix(R::Rng, m::RngIntElt, n::RngIntElt) -> Mtrx
   return Matrix(m, n, [R!0 : i in [1..m*n]]);
 end intrinsic;
 
+intrinsic Matrix(Q::SeqEnum[SeqEnum[RngElt]]) -> Mtrx
+{ Given a sequence Q consisting of m sequences, each of length n and having
+  entries in a ring R, return the m x n matrix over R whose rows are given
+  by the inner sequences of Q. }
+  QQ := Q[1]; for i in [2..#Q] do QQ cat:= Q[i]; end for;
+  return Matrix(#Q, #Q[1], QQ);
+end intrinsic;
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -39,20 +47,20 @@ ContactNumberExp := function(expInfoA, expInfoB)
   // Compare free points.
   for i in [1..Min(#freeA, #freeB)] do
     if freeA[i] eq freeB[i] then ContactNum := ContactNum + 1;
-    else return <ContactNum, false>; end if;
+    else return ContactNum, false; end if;
   end for;
   // If the num. of free points is not the same, no more points can be shared.
-  if #freeA ne #freeB then return <ContactNum, false>; end if;
+  if #freeA ne #freeB then return ContactNum, false; end if;
   // Compare satellite points.
   satA[#satA] := satA[#satA] - 1; satB[#satB] := satB[#satB] - 1;
   for i in [2..Min(#satA, #satB)] do
     ContactNum := ContactNum + Min(satA[i], satB[i]);
-    if satA[i] ne satB[i] then return <ContactNum, false>; end if;
+    if satA[i] ne satB[i] then return ContactNum, false; end if;
   end for;
   // If the number of stairs is not the same, no more points can be shared.
-  if #satA ne #satB then return <ContactNum, false>; end if;
+  if #satA ne #satB then return ContactNum, false; end if;
   // Otherwise, all the points are shared.
-  return <ContactNum, true>;
+  return ContactNum, true;
 end function;
 
 ContactNumber := function(branchInfoA, branchInfoB)
@@ -61,9 +69,9 @@ ContactNumber := function(branchInfoA, branchInfoB)
   for r in [1..Min(#branchInfoA,#branchInfoB)] do
     // Get the contact num. of this char. exponent and wheter
     // or not we should compare more points.
-    C := ContactNumberExp(branchInfoA[r], branchInfoB[r]);
-    ContactNum := ContactNum + C[1];
-    if not C[2] then break; end if;
+    C, c := ContactNumberExp(branchInfoA[r], branchInfoB[r]);
+    ContactNum := ContactNum + C;
+    if not c then break; end if;
   end for; return ContactNum;
 end function;
 
@@ -178,7 +186,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
   // Substract one to all the contact numbers and erase the
   // first point of the proximity matricies of the current
   // branches since we are moving down the Enriques diagram.
-  newBranchProx := [*RemoveRowColumn(branchP, 1, 1) : branchP in branchesProx*];
+  newBranchProx := [* RemoveRowColumn(branchP, 1, 1) : branchP in branchesProx *];
   // Traverse each sub-diagram recursivaly.
   splitResult := [* ProximityMatrixImpl2(Submatrix(contactMat, split, split),
     newBranchProx[split]) : split in S *];
@@ -213,8 +221,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
   return <P, rowPoint[SS]>;
 end function;
 
-function ProximityMatrixImpl(branches: ExtraPoint := false,
-                                       Coefficients := false)
+function ProximityMatrixImpl(branches: ExtraPoint := false)
   // Compute the proximity matrix, the contact matrix and
   // the mult. vector of each branch.
   contactMat := ContactMatrix(branches);
@@ -229,17 +236,14 @@ function ProximityMatrixImpl(branches: ExtraPoint := false,
     Max(ElementToSequence(contactMat[i])) + 1) : i in [1..#branches] ];
   // Get the proximity matrix of f and the position of each infinitely
   // near point inside the prox. matrix.
-  P := ProximityMatrixImpl2(contactMat, branchProx);
+  X := ProximityMatrixImpl2(contactMat, branchProx); P := X[1]; R := X[2];
   // Finally, rearrange each point's multiplicity so its position is coherent
   // coherent with the prox. matrix P.
   E := [];
   for i in [1..#branches] do
-    Append(~E, ZeroMatrix(IntegerRing(), 1, Nrows(P[1])));
-    for j in [1..#P[2][i]] do E[i][1, P[2][i][j]] := branchMult[i][j]; end for;
-  end for;
-
-  if Coefficients then return <P[1], E, branchCoeff>;
-  else return <P[1], E>; end if;
+    Append(~E, ZeroMatrix(IntegerRing(), 1, Nrows(P)));
+    for j in [1..#R[i]] do E[i][1, R[i][j]] := branchMult[i][j]; end for;
+  end for; return P, E, branchCoeff;
 end function;
 
 intrinsic ProximityMatrix(f::RngMPolLocElt: ExtraPoint := false,
@@ -248,13 +252,13 @@ intrinsic ProximityMatrix(f::RngMPolLocElt: ExtraPoint := false,
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   // Get the general Puiseux expansion of f.
   branches := NewtonPuiseuxAlgorithm(f);
-  P := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint,
-                             Coefficients := Coefficients);
-  if not Coefficients then return <P[1], &+P[2]>;
-  else C := [* 0 : i in [1..Nrows(P[1])] *];
-    for i in [1..#P[2]] do
-      I := [ j : j in [1..Ncols(P[1])] | P[2][i][1][j] ne 0 ];
-      for j in [1..#I] do C[I[j]] := P[3][i][j]; end for;
-    end for; return <P[1], &+P[2], C>;
+  P, E, C := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint);
+  if not Coefficients then return P, &+E;
+  else CC := [* 0 : i in [1..Nrows(P)] *];
+    for i in [1..#E] do
+      I := [ j : j in [1..Ncols(P)] | E[i][1][j] ne 0 ];
+      for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
+    end for;
+  return P, &+E, CC;
   end if;
 end intrinsic;

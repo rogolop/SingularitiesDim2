@@ -38,7 +38,7 @@ ComputeBasePointsData := procedure(~P, ~EE, ~CC, ~S, N, ~E, ~C, ~V, ~v)
   // Hold information about the branches in each generator.
   for i in [1..#S] do
     for m in S[i][2] do
-      E[m[2]] := E[m[2]] + m[1]*EE[i];
+      E[m[2]] := E[m[2]] + m[1] * EE[i];
     end for;
   end for;
   // Merge the coefficients of each branch.
@@ -48,7 +48,7 @@ ComputeBasePointsData := procedure(~P, ~EE, ~CC, ~S, N, ~E, ~C, ~V, ~v)
     for j in [1..#I] do C[I[j]] := CC[i][j]; end for;
   end for;
   // Values for each generator in G & each (initial) base point.
-  V := [e*Transpose(P^-1) : e in E];
+  V := [e * Transpose(P^-1) : e in E];
   v := ZeroMatrix(IntegerRing(), 1, Ncols(P));
   for i in [1..Ncols(P)] do v[1][i] := Min([vj[1][i] : vj in V]); end for;
 end procedure;
@@ -65,18 +65,13 @@ require Rank(Parent(Representative(I))) eq 2:
 
   // ------------ Compute all information --------------
   S := NewtonPuiseuxAlgorithm(G: Polynomial := true); // Puiseux series for each branch.
-  TEMP := ProximityMatrixImpl([* <s[1], 1> : s in S *]: ExtraPoint := true, Coefficients := true);
-  P := TEMP[1]; // Proximity matrix of the cluster.
-  EE := TEMP[2]; // Multiplicities of each branch in the cluster.
-  CC := TEMP[3]; // Coefficients of each branch in the cluster.
+  P, EE, CC := ProximityMatrixImpl([* <s[1], 1> : s in S *]: ExtraPoint := true);
 
   E := []; // Multiplicities of each generator.
   C := [* *]; // Coefficients of BP(I).
   V := []; // Vector a values for each generator.
   v := []; // Virtual values of BP(I).
   ComputeBasePointsData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
-
-  //print [*P, EE, E, V, v, CC, C*];
 
   // ------------ Add new free points ------------------
   lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
@@ -126,7 +121,7 @@ require Rank(Parent(Representative(I))) eq 2:
 
   // ------------ Remove non base points ---------------
   // Multiplicities for the cluster of base points.
-  e := v*Transpose(P); I := [i : i in [1..Ncols(P)] | e[1][i] ne 0];
+  e := v * Transpose(P); I := [i : i in [1..Ncols(P)] | e[1][i] ne 0];
   // Remove points not in the cluster of base points.
   P := Submatrix(P, I, I); v := Submatrix(v, [1], I); C := C[I];
 

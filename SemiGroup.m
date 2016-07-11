@@ -84,7 +84,7 @@ intrinsic SemiGroup(P::Mtrx, v::Mtrx) -> []
 require Ncols(P) eq Nrows(P) and Ncols(v) eq Ncols(P) and Nrows(v) eq 1:
   "Arguments do not have the required dimensions";
 require v[1][1] le v[1][Ncols(v)]: "Argument v is not a vector of values";
-require #[i: i in [1..Ncols(P)] | (v*P)[1][i] gt 0] eq 1 and Gcd(Eltseq(v)) eq 1:
+require #[i: i in [1..Ncols(P)] | (v * P)[1][i] gt 0] eq 1 and Gcd(Eltseq(v)) eq 1:
   "Weighted cluster not irreducible";
 
   G := [v[1][1]]; n := Ncols(P); isSat := &+[Transpose(P)[i] : i in [1..n]];
@@ -106,7 +106,8 @@ end procedure;
 intrinsic SemiGroupMembership(v::RngIntElt, G::[ RngIntElt ]) -> BoolElt
 { Return whether or not an integer v belong to a numerical semigroup G }
 require Gcd(G) eq 1: "Argument must be a numerical semigroup";
-  Sort(~G); B := Matrix(v + 1, #G, [IntegerRing() | -1 : i in [1..(v + 1)*#G]]);
+  Sort(~G);
+  B := Matrix(v + 1, #G, [IntegerRing() | -1 : i in [1..(v + 1) * #G]]);
   for i in [1..v + 1] do B[i][1] := v mod G[1] mod 2 - 1; end for;
   for i in [1..#G] do B[0 + 1][i] := 1; end for; b := 0;
   SemiGroupMemberImpl(v, #G, ~G, ~B, ~b); return b eq 1;
@@ -119,7 +120,7 @@ end intrinsic;
 //  if v lt 0 or i gt #G then return []; end if; CC := [];
 //
 //  for k in Reverse([0..(v div G[i])]) do
-//    T := SemiGroupCoordImpl(v - k*G[i], i + 1, G);
+//    T := SemiGroupCoordImpl(v - k * G[i], i + 1, G);
 //    for j in [1..#T] do T[j][i] := k; CC cat:= [T[j]]; end for;
 //  end for; return CC;
 //end function;

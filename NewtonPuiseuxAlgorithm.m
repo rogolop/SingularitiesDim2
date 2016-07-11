@@ -30,6 +30,7 @@ MyProd := function(a, b)
   else return a * b; end if;
 end function;
 
+// Counter clockwise turn.
 CcwTurn := function(p1, p2, p3)
   return (MyProd(p2[1] - p1[1], p3[2] - p1[2]) -
           MyProd(p2[2] - p1[2], p3[1] - p1[1])) le 0;
@@ -123,7 +124,7 @@ require &and[Rank(Parent(f)) eq 2 : f in L]:
     Evaluate(L[i], <0, 0>) eq 0];
   end for;
   S := yBranch cat SequenceToList(NewtonPuiseuxAlgorithmLoop(sqFreePart,
-    sqFreeFact, 1, Terms - 1));
+    sqFreeFact, Terms - 1));
 
   // Return the polynomial residue if requested.
   if not Polynomial then return [* <s[1], s[2]> : s in S *];
@@ -160,7 +161,6 @@ NewtonPuiseuxAlgorithmLoop := function(f, L, terms)
       S cat:= [<x^(m/n) * (a[1] + MyComposition(s[1], n)), s[2], s[3]> : s in R];
     end for;
   end for;
-
   return S;
 end function;
 
@@ -186,7 +186,8 @@ intrinsic NewtonPuiseuxAlgorithmExpandReduced(s::RngSerPuisElt, f::RngMPolLocElt
 require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
   n := ExponentDenominator(s); x := Parent(s).1;
   m := s eq 0 select 0 else Degree(s);
-  S := Terms gt 0 select NewtonPuiseuxAlgorithmReducedLoop(f, n, Terms - 1)
+
+  S := Terms gt 0 select NewtonPuiseuxAlgorithmReducedLoop(f, Terms - 1)
        else [<PuiseuxSeriesRing(CoefficientRing(Parent(f)))!0, f>];
   P<x> := PuiseuxSeriesRing(CoefficientRing(Parent(s)));
   if Polynomial then return [<s + x^m * MyComposition(si[1], n), si[2]> : si in S];
