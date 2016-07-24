@@ -1,32 +1,21 @@
 import "ProximityMatrix.m": ProximityMatrixImpl, CoefficientsVectorBranch;
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-intrinsic ExactQuotient(f::RngMPolLocElt, g::RngMPolLocElt) -> RngMPolLocElt
-{ Return the quotient x div y, assuming y divides x exactly. }
-  P := Parent(f); Q := PolynomialRing(CoefficientRing(P), Rank(P));
-  return P!ExactQuotient(Q!f, Q!g);
-end intrinsic;
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
 ExpandWeightedCluster := procedure(~P, ~EE, ~CC, ~S, b)
   // Expand the proximity matrix.
   P := InsertBlock(ScalarMatrix(Ncols(P) + 1, 1), P, 1, 1);
   // Expand branches multiplicities.
-  EE := [InsertBlock(ZeroMatrix(IntegerRing(), 1, Ncols(P)), EEi, 1, 1) : EEi in EE];
-  if b ne -1 then EE[b][1, Ncols(P)] := 1; end if;
-  // If a free points, expand the Puiseux series.
+  EE := [InsertBlock(ZeroMatrix(IntegerRing(), 1, Ncols(P)), EEi, 1, 1)
+     : EEi in EE];
+  // If a free points, it has mult. 1 in the branch & expand the Puiseux series.
   if b ne -1 then
+    EE[b][1, Ncols(P)] := 1;
     // Number of points of branch b appearing in BP(I)
     m := #[e : e in Eltseq(EE[b]) | e ne 0];
     // If we do not have enough terms of Puiseux already computed...
     if #CC[b] lt m + 1 then
-      TEMP := NewtonPuiseuxAlgorithmExpandReduced(S[b][1], S[b][3]:
+      SS := NewtonPuiseuxAlgorithmExpandReduced(S[b][1], S[b][3]:
         Terms := m + 1 - #CC[b], Polynomial := true)[1];
-      S[b][1] := TEMP[1]; S[b][3] := TEMP[2];
+      S[b][1] := SS[1]; S[b][3] := SS[2];
       CC[b] := CoefficientsVectorBranch(S[b][1], m + 1);
     end if;
   end if;
@@ -36,19 +25,17 @@ ComputeBasePointsData := procedure(~P, ~EE, ~CC, ~S, N, ~E, ~C, ~V, ~v)
   // Compute the multiplicities of each generator in G.
   E := [ZeroMatrix(IntegerRing(), 1, Ncols(P)) : i in [1..N]];
   // Hold information about the branches in each generator.
-  for i in [1..#S] do
-    for m in S[i][2] do
-      E[m[2]] := E[m[2]] + m[1] * EE[i];
-    end for;
-  end for;
+  for i in [1..#S] do for m in S[i][2] do
+    E[m[2]] := E[m[2]] + m[1] * EE[i];
+  end for; end for;
   // Merge the coefficients of each branch.
-  C := [* Infinity() : i in [1..Ncols(P)] *];
+  C := [Parent(CC[1][1]) | <0, 1> : i in [1..Ncols(P)]];
   for i in [1..#EE] do
     I := [j : j in [1..Ncols(P)] | EE[i][1][j] ne 0];
     for j in [1..#I] do C[I[j]] := CC[i][j]; end for;
   end for;
   // Values for each generator in G & each (initial) base point.
-  V := [e * Transpose(P^-1) : e in E];
+  Pt_inv := Transpose(P^-1); V := [e * Pt_inv : e in E];
   v := ZeroMatrix(IntegerRing(), 1, Ncols(P));
   for i in [1..Ncols(P)] do v[1][i] := Min([vj[1][i] : vj in V]); end for;
 end procedure;
@@ -64,11 +51,11 @@ require Rank(Parent(Representative(I))) eq 2:
   G := Basis(I); F := Gcd(G); G := [ExactQuotient(g, F) : g in G];
 
   // ------------ Compute all information --------------
-  S := NewtonPuiseuxAlgorithm(G: Polynomial := true); // Puiseux series for each branch.
+  S := NewtonPuiseuxAlgorithm(G: Polynomial := true);
   P, EE, CC := ProximityMatrixImpl([* <s[1], 1> : s in S *]: ExtraPoint := true);
 
   E := []; // Multiplicities of each generator.
-  C := [* *]; // Coefficients of BP(I).
+  C := []; // Coefficients of BP(I).
   V := []; // Vector a values for each generator.
   v := []; // Virtual values of BP(I).
   ComputeBasePointsData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
@@ -97,7 +84,7 @@ require Rank(Parent(Representative(I))) eq 2:
   end while;
 
   // ------------ Add new satellite points ------------------
-  points2test := Ncols(P) - 1; p := 2; // Do not start by the origin.
+  points2test := Ncols(P) - 1; p := 2; // Do not start at the origin.
   while points2test gt 0 do
     // Values for the generators at point p.
     Vp := [vi[1][p] - v[1][p] : vi in V];

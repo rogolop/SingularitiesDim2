@@ -1,4 +1,3 @@
-
 Euclides := function(m, n)
   hs := []; ns := [];
   while n ne 0 do
@@ -36,7 +35,7 @@ require Gcd(G) eq 1: "Argument must be a numerical semigroup";
   M := [ G[1] ]; N := [ G[1] ];
   for i in [2..#G] do
     M cat:= [ &+[j ne i select -(N[j - 1] - N[j]) div N[i - 1] * M[j]
-      else G[j] : j in [2..i]] ]; N cat:= [ Gcd(M) ];
+      else G[j] : j in [2..i]] ]; N cat:= [Gcd(M)];
   end for;
   return [<0, N[1]>] cat [<M[i], N[i]> : i in [2..#M]];
 end intrinsic;
@@ -54,7 +53,7 @@ TailExponentMatrix := function(P, v)
   E := CharExponents(SemiGroup(P, v)); n := Ncols(P);
   // If last point is satellite there is no tail exponent
   if &+Eltseq(P[n]) eq -1 then error "no free point"; end if;
-  isSat := &+[Transpose(P)[j]: j in [1..n]];
+  Pt := Transpose(P); isSat := &+[Pt[j]: j in [1..n]];
   p := ([i : i in Reverse([1..n]) | isSat[i] eq -1] cat [0])[1] + 1;
   return <E[#E][1] + (n - p), 1>;
 end function;
@@ -84,11 +83,13 @@ intrinsic SemiGroup(P::Mtrx, v::Mtrx) -> []
 require Ncols(P) eq Nrows(P) and Ncols(v) eq Ncols(P) and Nrows(v) eq 1:
   "Arguments do not have the required dimensions";
 require v[1][1] le v[1][Ncols(v)]: "Argument v is not a vector of values";
-require #[i: i in [1..Ncols(P)] | (v * P)[1][i] gt 0] eq 1 and Gcd(Eltseq(v)) eq 1:
+require #[i: i in [1..Ncols(P)] | (v * P)[1][i] gt 0] eq 1:
   "Weighted cluster not irreducible";
+require Gcd(Eltseq(v)) eq 1: "Weighted cluster not irreducible";
 
-  G := [v[1][1]]; n := Ncols(P); isSat := &+[Transpose(P)[i] : i in [1..n]];
-  G cat:= [v[1][i] : i in [1..n - 1] | isSat[i] ne -1 and isSat[i + 1] eq -1];
+  n := Ncols(P); Pt := Transpose(P); isSat := &+[Pt[i] : i in [1..n]];
+  G := [v[1][1]]; G cat:= [v[1][i] : i in [1..n - 1] |
+    isSat[i] ne -1 and isSat[i + 1] eq -1];
   return G;
 end intrinsic;
 
@@ -134,7 +135,7 @@ end intrinsic;
 
 InversionFormula := function(M0, P, c)
   // Compute the exp. of the last free pt. depending of the first char. exp.
-  N := Ncols(P); isSat := &+[Transpose(P)[j]: j in [1..N]];
+  N := Ncols(P); Pt := Transpose(P); isSat := &+[Pt[j]: j in [1..N]];
   p := ([i : i in [1..N] | isSat[i] eq -1] cat [N + 1])[1] - 1;
   m := ([i : i in [2..p] | Type(c[i]) ne Infty] cat [0])[1] - 1;
   // Depending on whether 'm' is 0 or not, we have case (a) or case (b).

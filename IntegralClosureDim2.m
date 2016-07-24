@@ -1,4 +1,6 @@
 {
+  LocalPolynomialRing.m
+  NewtonPolygon.m
   NewtonPuiseuxAlgorithm.m
   SemiGroup.m
   ProximityMatrix.m

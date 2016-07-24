@@ -1,30 +1,5 @@
 import "SemiGroup.m": Euclides, TailExponentSeries;
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-intrinsic Submatrix(A::Mtrx, I::[RngIntElt], J::[RngIntElt]) -> Mtrx
-{ Given an m x n matrix A and integer sequences I and J, return the submatrix
-  of A given by the row indices in I and the column indices in J. }
-  return Transpose(Matrix(Transpose(Matrix(A[I]))[J]));
-end intrinsic;
-
-intrinsic ZeroMatrix(R::Rng, m::RngIntElt, n::RngIntElt) -> Mtrx
-{ Given a ring R and integers m, n≥0, return the m x n zero matrix over R. }
-  return Matrix(m, n, [R!0 : i in [1..m*n]]);
-end intrinsic;
-
-intrinsic Matrix(Q::SeqEnum[SeqEnum[RngElt]]) -> Mtrx
-{ Given a sequence Q consisting of m sequences, each of length n and having
-  entries in a ring R, return the m x n matrix over R whose rows are given
-  by the inner sequences of Q. }
-  QQ := Q[1]; for i in [2..#Q] do QQ cat:= Q[i]; end for;
-  return Matrix(#Q, #Q[1], QQ);
-end intrinsic;
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
 PuiseuxInfo := function(s)
   if Type(s) eq RngMPolLocElt then return [<[<0,0>], [0, Infinity()]>]; end if;
   E := CharExponents(s); T := TailExponentSeries(s);
@@ -69,9 +44,9 @@ ContactNumber := function(branchInfoA, branchInfoB)
   for r in [1..Min(#branchInfoA,#branchInfoB)] do
     // Get the contact num. of this char. exponent and wheter
     // or not we should compare more points.
-    C, c := ContactNumberExp(branchInfoA[r], branchInfoB[r]);
+    C, cont := ContactNumberExp(branchInfoA[r], branchInfoB[r]);
     ContactNum := ContactNum + C;
-    if not c then break; end if;
+    if not cont then break; end if;
   end for; return ContactNum;
 end function;
 
@@ -137,20 +112,22 @@ end function;
 
 CoefficientsVectorBranch := function(s, maxContact)
   // If the branch is the y-axis
+  R := CoefficientRing(Parent(s));
   if Type(s) eq RngMPolLocElt then
-    return [* CoefficientRing(Parent(s))!0 *] cat
-           [* Infinity() : i in [1..maxContact] *];
+    return [<1, R!0>] cat [<0, R!1> : i in [1..maxContact]];
   end if; // Otherwise, the branch is represented by a Puiseux series.
-  I := PuiseuxInfo(s); C := [* *];
+  I := PuiseuxInfo(s); C := [];
   for i in [1..#Prune(I)] do
-    C cat:= [* freePoint[2] : freePoint in I[i][1] *];
+    C cat:= [<1, freePoint[2]> : freePoint in I[i][1]];
     Hi := I[i][2]; Hi[#Hi] := Hi[#Hi] - 1;
-    C cat:= [* Infinity() : j in [1..&+Hi[2..#Hi]] *];
+    C cat:= [<0, R!1> : j in [1..&+Hi[2..#Hi]]];
   end for;
-  C cat:= [* freePoint[2] : freePoint in I[#I][1] *];
-  if #C lt maxContact then C cat:= [*0 : i in [1..(maxContact - #C)]*]; end if;
+  C cat:= [<1, freePoint[2]> : freePoint in I[#I][1]];
+  if #C lt maxContact then
+    C cat:= [<1, R!0> : i in [1..(maxContact - #C)]];
+  end if;
   // The 0 Puiseux series must be treated separately.
-  if s eq 0 then C cat:= [* 0 *]; end if;
+  if s eq 0 then C cat:= [<1, R!0>]; end if;
   return C;
 end function;
 
@@ -222,16 +199,15 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
 end function;
 
 function ProximityMatrixImpl(branches: ExtraPoint := false)
-  // Compute the proximity matrix, the contact matrix and
-  // the mult. vector of each branch.
+  // Compute the proximity matrix, the contact matrix, the mult.
+  // vector of each branch and its coefficients.
   contactMat := ContactMatrix(branches);
   branchProx := [* ProximityMatrixBranch(branches[i][1],
-    Max(ElementToSequence(contactMat[i])):
+    Max(ElementToSequence(contactMat[i])) :
     ExtraPoint := ExtraPoint) : i in [1..#branches] *];
   branchMult := [* branches[i][2] * MultiplicityVectorBranch(branches[i][1],
-    Max(ElementToSequence(contactMat[i])):
+    Max(ElementToSequence(contactMat[i])) :
     ExtraPoint := ExtraPoint) : i in [1..#branches] *];
-  // Compute the coefficients of each infinitely near point.
   branchCoeff := [ CoefficientsVectorBranch(branches[i][1],
     Max(ElementToSequence(contactMat[i])) + 1) : i in [1..#branches] ];
   // Get the proximity matrix of f and the position of each infinitely
@@ -254,11 +230,11 @@ require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   branches := NewtonPuiseuxAlgorithm(f);
   P, E, C := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint);
   if not Coefficients then return P, &+E;
-  else CC := [* 0 : i in [1..Nrows(P)] *];
+  else CC := [Parent(C[1][1]) | <1, 0> : i in [1..Nrows(P)]];
     for i in [1..#E] do
       I := [ j : j in [1..Ncols(P)] | E[i][1][j] ne 0 ];
       for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
     end for;
-  return P, &+E, CC;
+  return <P, &+E, CC>;
   end if;
 end intrinsic;
