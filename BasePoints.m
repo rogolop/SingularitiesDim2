@@ -13,7 +13,7 @@ ExpandWeightedCluster := procedure(~P, ~EE, ~CC, ~S, b)
     m := #[e : e in Eltseq(EE[b]) | e ne 0];
     // If we do not have enough terms of Puiseux already computed...
     if #CC[b] lt m + 1 then
-      SS := NewtonPuiseuxAlgorithmExpandReduced(S[b][1], S[b][3]:
+      SS := PuiseuxExpansionExpandReduced(S[b][1], S[b][3]:
         Terms := m + 1 - #CC[b], Polynomial := true)[1];
       S[b][1] := SS[1]; S[b][3] := SS[2];
       CC[b] := CoefficientsVectorBranch(S[b][1], m + 1);
@@ -51,7 +51,7 @@ require Rank(Parent(Representative(I))) eq 2:
   G := Basis(I); F := Gcd(G); G := [ExactQuotient(g, F) : g in G];
 
   // ------------ Compute all information --------------
-  S := NewtonPuiseuxAlgorithm(G: Polynomial := true);
+  S := PuiseuxExpansion(G: Polynomial := true);
   P, EE, CC := ProximityMatrixImpl([* <s[1], 1> : s in S *]: ExtraPoint := true);
 
   E := []; // Multiplicities of each generator.

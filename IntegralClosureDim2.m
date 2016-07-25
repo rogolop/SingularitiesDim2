@@ -1,7 +1,7 @@
 {
   LocalPolynomialRing.m
   NewtonPolygon.m
-  NewtonPuiseuxAlgorithm.m
+  PuiseuxExpansion.m
   SemiGroup.m
   ProximityMatrix.m
   BasePoints.m

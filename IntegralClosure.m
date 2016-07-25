@@ -17,7 +17,8 @@ end intrinsic;
 // Given a Puiseux series s, returns its associated Weierstrass equation.
 intrinsic WeierstrassEquationDeterminant(s::RngSerPuisElt, Q::RngMPolLoc) -> RngMPolLocElt
 { Computes the Weierstrass equation associated to a Puiseux series }
-  x := Q.1; y := Q.2; C, m, n := Coefficients(s); g := CyclicGroup(n).1^(n - 1);
+  x := Q.1; y := Q.2; C, m, n := Coefficients(s); G := CyclicGroup(n);
+  g := n gt 1 select G.1^(n - 1) else G.0;
 
   V := [&+[Q | C[i + 1] * x^((m + i - s) div n) : i in [0..#C - 1] |
     (i + m) mod n eq s] : s in [0..n - 1]];
@@ -34,16 +35,13 @@ ClusterFactorization := function(P, v, c)
   N := Transpose(P) * P; Ninv := N^-1; exc := v * N;
   n := Ncols(P); ZZ := IntegerRing();
 
-  B := [];
-  // For each point with strictly positive excess.
+  B := []; // For each point with strictly positive excess.
   for i in [i : i in [1..n] | exc[1][i] gt 0] do
     p := i; I := [p];
-    // Traverse the cluster back to the origin
-    while p ne 1 do
+    while p ne 1 do // Traverse the cluster back to the origin
       p := [j : j in Reverse([1..n]) | P[p][j] eq -1][1]; I := [p] cat I;
     end while;
-    v := ZeroMatrix(ZZ, 1, n); v[1][i] := exc[1][i]; v := v * Ninv;
-    B cat:= [v];
+    v := ZeroMatrix(ZZ, 1, n); v[1][i] := exc[1][i]; v := v * Ninv; B cat:= [v];
   end for; return B;
 end function;
 
@@ -53,10 +51,11 @@ SharplyCurve := function(P, v, c, Q)
   m := Gcd(Eltseq(v)); v := v div m; G := SemiGroup(P, v);
   M := CharExponents(G) cat [TailExponentMatrix(P, v)];
   // If the curve is the y-axis.
-  if #G eq 1 and #c gt 1 and &and[Type(c[i]) eq Infty: i in [2..#c]] then return Q.1; end if;
+  if #G eq 1 and #c gt 1 and &and[c[i][1] eq 0: i in [2..#c]] then
+  return Q.1; end if;
 
   // If the curve is inverted.
-  if Type(c[2]) eq Infty then M := InversionFormula(M, P, c); end if;
+  if c[2][1] eq 0 then M := InversionFormula(M, P, c); end if;
   P<t> := PuiseuxSeriesRing(Parent(c[1])); s := P!0; k := 1; n := M[1][2];
   for i in [2..#M] do
     mj := M[i - 1][1]; nj := M[i - 1][2]; mi := M[i][1]; h0 := (mi - mj) div nj;
@@ -65,40 +64,9 @@ SharplyCurve := function(P, v, c, Q)
   end for; return WeierstrassEquationDeterminant(s, Q)^m;
 end function;
 
-// Compute the curvettes an irreducible weighted cluster.
-// Caveat: Depending on whether P ends with a free or a satellite point
-//         this function returns g + 1 or g equations respectively.
+// Computes the curvettes a weighted cluster.
 Curvettes := function(P, v, c, Q)
-  Pt := Transpose(P); e := v * Pt; N := Pt * P; Ninv := N^-1;
-  n := Ncols(P); ZZ := IntegerRing();
-  // Only look at points with e > 0.
-  inCluster := [i : i in [1..n] | e[1][i] ne 0];
-  isFreeOrSat := &+[Pt[i] : i in [1..n]]; isFreeOrSat[1] := 0;
 
-  Cv := []; q := #inCluster;
-  // While q different from the origin.
-  while q ne 0 do
-    // Find last free point in the cluster.
-    p := [i : i in Reverse([1..q]) | isFreeOrSat[inCluster[i]] eq 0][1];
-    // Compute the irreducible cluster K(p) ending at p.
-    inCluster := inCluster[1..p]; m := #inCluster;
-    v := ZeroMatrix(ZZ, 1, n); v[1][m] := 1; v := v * Ninv;
-    // Compute the sharply curve through K(p).
-    Cv cat:= [<SharplyCurve(Submatrix(P, inCluster, inCluster),
-      Submatrix(v, [1], inCluster), c[inCluster], Q), v>];
-    // Either the first sat after p or the origin.
-    q := ([0] cat [i : i in Reverse([1..m]) |
-      Abs(isFreeOrSat[inCluster[i]]) eq 1])[1];
-  end while;
-  // Add the missing branch (first curvette).
-  if LeadingTerm(Cv[1][1]) eq Q.2 then
-    e := ZeroMatrix(ZZ, 1, n); e[1][1] := 1;
-    for i in [1..n] do if Type(c[i]) eq Infty then e[1][i] := 1; end if; end for;
-    Cv cat:= [<Q.1, e * Pt^-1>];
-  else
-    e := ZeroMatrix(ZZ, 1, n); e[1][1] := 1;
-    Cv cat:= [<Q.2, e * Pt^-1>];
-  end if; return Reverse(Cv);
 end function;
 
 // Unloads the weighted cluster represented by (P, v) where
