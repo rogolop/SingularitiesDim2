@@ -51,24 +51,24 @@ require &and[Rank(Parent(f)) eq 2 : f in L]:
 end intrinsic;
 
 PuiseuxExpansionLoop := function(f, L, terms)
-  Q<x> := PuiseuxSeriesRing(CoefficientRing(Parent(f)));
-  x0 := Parent(f).1; y0 := Parent(f).2;
+  Q<t> := PuiseuxSeriesRing(CoefficientRing(Parent(f)));
+  x := Parent(f).1; y := Parent(f).2;
   // Step (i.a): Select only those factors containing the 0 branch.
   S := yFactor(f) gt 0 select [<Q!0, [<g[2], g[3]> : g in L
-    | yFactor(g[1]) ne 0], y0>] else [];
+    | yFactor(g[1]) ne 0], y>] else [];
   // Step (i.b): For each side...
   for F in NewtonSides(f, NewtonPolygon(f)) do
     n := F[1]; m := F[2]; P := F[3];
     // Apply the change of variables (1).
-    C := Reverse(Coefficients(n eq 1 select f else Evaluate(f, 1, x0^n), 2));
+    C := Reverse(Coefficients(n eq 1 select f else Evaluate(f, 1, x^n), 2));
     CL := [<Reverse(Coefficients(n eq 1 select g[1] else
-      Evaluate(g[1], 1, x0^n), 2)), g[2], g[3]> : g in L];
+      Evaluate(g[1], 1, x^n), 2)), g[2], g[3]> : g in L];
     // For each root...
     for a in [<Root(a[1], n), a[2]> : a in Roots(P)] do
       // Apply the change of variables (2) & get the sub-solution recursively.
-      ff := [i gt 1 select C[i] + Self(i - 1) * x0^m * (a[1] + y0) else C[1]
+      ff := [i gt 1 select C[i] + Self(i - 1) * x^m * (a[1] + y) else C[1]
          : i in [1..#C]][#C];
-      LL := [<[i gt 1 select Cj[1][i] + Self(i - 1) * x0^m * (a[1] + y0) else
+      LL := [<[i gt 1 select Cj[1][i] + Self(i - 1) * x^m * (a[1] + y) else
         Cj[1][1] : i in [1..#Cj[1]]][#Cj[1]], Cj[2], Cj[3]> : Cj in CL];
       // Select only those factors that contain the current branch.
       LL := [g : g in LL | NewtonPolygon(g[1])[1][2] ne 0];
@@ -77,7 +77,7 @@ PuiseuxExpansionLoop := function(f, L, terms)
         PuiseuxExpansionLoop(ff, LL, terms - 1) else
           [<Q!0, [<g[2], g[3]> : g in LL], ff>];
       // Undo the change of variables.
-      S cat:= [<x^(m/n) * (a[1] + Composition(s[1], x^(1/n))), s[2], s[3]>
+      S cat:= [<t^(m/n) * (a[1] + Composition(s[1], t^(1/n))), s[2], s[3]>
            : s in R];
     end for;
   end for; return S;
@@ -109,10 +109,10 @@ require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
 
   S := Terms gt 0 select PuiseuxExpansionReducedLoop(f, Terms - 1)
        else [<PuiseuxSeriesRing(CoefficientRing(Parent(f)))!0, f>];
-  P<x> := PuiseuxSeriesRing(CoefficientRing(Parent(s)));
-  if Polynomial then return [<s + x^m * Composition(si[1], x^(1/n)), si[2]>
+  P<t> := PuiseuxSeriesRing(CoefficientRing(Parent(s)));
+  if Polynomial then return [<s + t^m * Composition(si[1], t^(1/n)), si[2]>
     : si in S];
-  else return [s + x^m * Composition(si[1], x^(1/n)): si in S]; end if;
+  else return [s + t^m * Composition(si[1], t^(1/n)): si in S]; end if;
 end intrinsic;
 
 intrinsic PuiseuxExpansionExpandReduced(x::RngMPolLocElt, f::RngMPolLocElt
@@ -124,24 +124,24 @@ require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
 end intrinsic;
 
 PuiseuxExpansionReducedLoop := function(f, terms)
-  Q<x> := PuiseuxSeriesRing(CoefficientRing(Parent(f)));
-  x0 := Parent(f).1; y0 := Parent(f).2;
+  Q<t> := PuiseuxSeriesRing(CoefficientRing(Parent(f)));
+  x := Parent(f).1; y := Parent(f).2;
   // Step (i.a): Select only those factors containing the 0 branch.
-  S := yFactor(f) gt 0 select [<Q!0, y0>] else [];
+  S := yFactor(f) gt 0 select [<Q!0, y>] else [];
   // Step (i.b): For each side...
   for F in NewtonSides(f, NewtonPolygon(f)) do
     n := F[1]; m := F[2]; P := F[3];
     // Apply the change of variables (1).
-    C := Reverse(Coefficients(n eq 1 select f else Evaluate(f, 1, x0^n), 2));
+    C := Reverse(Coefficients(n eq 1 select f else Evaluate(f, 1, x^n), 2));
     // For each root...
     for a in [<Root(a[1], n), a[2]> : a in Roots(P)] do
       // Apply the change of variables (2) & get the sub-solution recursively.
-      g := [i gt 1 select C[i] + Self(i - 1) * x0^m * (a[1] + y0) else C[1]
+      g := [i gt 1 select C[i] + Self(i - 1) * x^m * (a[1] + y) else C[1]
          : i in [1..#C]][#C];
       R := (a[2] ne 1 and terms lt -1) or terms gt 0 select
         PuiseuxExpansionReducedLoop(g, terms - 1) else [<Q!0, g>];
       // Undo the change of variables.
-      S cat:= [<x^(m/n) * (a[1] + Composition(s[1], x^(1/n))), s[2]> : s in R];
+      S cat:= [<t^(m/n) * (a[1] + Composition(s[1], t^(1/n))), s[2]> : s in R];
     end for;
   end for; return S;
 end function;

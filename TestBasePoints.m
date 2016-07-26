@@ -1,6 +1,14 @@
 AttachSpec("./IntegralClosureDim2.m");
 Q<x, y> := LocalPolynomialRing(RationalField(), 2, "lglex");
 
+function JacobiIdeal1(f)
+  return ideal<Q | Derivative(f, 1), Derivative(f, 2)>;
+end function;
+
+function JacobiIdeal2(f)
+  return ideal<Q | f, Derivative(f, 1), Derivative(f, 2)>;
+end function;
+
 // Whole ring
 I := ideal<Q | 1 + x, y>;
 B := BasePoints(I: Coefficients := true);

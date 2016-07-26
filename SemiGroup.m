@@ -10,11 +10,11 @@ intrinsic CharExponents(s::RngSerPuisElt) -> []
 { Returns the characteristic exponents of a Puiseux series }
   C, m, n := ElementToSequence(s);
   // Exponents appearing in the series s
-  E := [ m + i - 1 : i in [1 .. #C] | C[i] ne 0 ];
+  E := [m + i - 1 : i in [1 .. #C] | C[i] ne 0];
   charExps := [<0, n>]; ni := n;
   while ni ne 1 do
     // m_i = min{ j | a_j != 0 and j \not\in (n_{i-1}) }
-    mi := [ e : e in E | e mod ni ne 0 ][1];
+    mi := [e : e in E | e mod ni ne 0][1];
     // n_i = gcd(n, m_1, ..., m_k)
     ni := Gcd(ni, mi);
     Append(~charExps, <mi, ni>);
@@ -29,9 +29,9 @@ require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   return CharExponents(S[1]);
 end intrinsic;
 
-intrinsic CharExponents(G::[ RngIntElt ]) -> [ ]
+intrinsic CharExponents(G::[RngIntElt]) -> []
 { Computes the characteristic exponents from the generators of the semigroup }
-require Gcd(G) eq 1: "Argument must be a numerical semigroup";
+require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
   M := [G[1]]; N := [G[1]];
   for i in [2..#G] do
     M cat:= [ &+[j ne i select -(N[j - 1] - N[j]) div N[i - 1] * M[j]
@@ -43,7 +43,7 @@ end intrinsic;
 TailExponentSeries := function(s)
   C, m, n := ElementToSequence(s);
   // Exponents appearing in the series s
-  E := [ m + i - 1 : i in [1 .. #C] | C[i] ne 0 ];
+  E := [m + i - 1 : i in [1..#C] | C[i] ne 0];
   charExps := CharExponents(s); g := #charExps;
   if s eq 0 then return <0, 1>; end if;
   return [<e, 1> : e in Reverse(E) | e ge charExps[g][1]][1];
@@ -58,14 +58,23 @@ TailExponentMatrix := function(P, v)
   return <E[#E][1] + (n - p), 1>;
 end function;
 
+intrinsic SemiGroup(n::RngIntElt, M::[RngIntElt]) -> []
+{ Computes a minimal set of generators for the semigroup associated
+  to a set of charactetistic exponents }
+require Sort([n] cat M) eq [n] cat M: "M/n is not a characteristic set";
+  N := [i gt 1 select Gcd(Self(i - 1), M[i - 1]) else n : i in [1..#M + 1]];
+require Sort(N) eq Reverse(N) and N[#N] eq 1: "M/n is not a characteristic set";
+  G := [i gt 2 select ( (Self(i - 1) - M[i - 2]) * N[i - 2] div N[i - 1] ) +
+    M[i - 1] + ( (N[i - 2] - N[i - 1]) div N[i - 1] ) * M[i - 2]
+        else [n, M[1]][i] : i in [1..#M + 1]];
+  return G;
+end intrinsic;
+
 intrinsic SemiGroup(s::RngSerPuisElt) -> []
 { Computes a minimal set of generators for the semigroup of the
   Puiseux series of an irreducible plane curve }
   M := CharExponents(s); // (G)amma starts with <n, m, ...>
-  G := [i gt 2 select ( (Self(i-1) - M[i-1][1]) * M[i-2][2] div M[i-1][2] ) +
-    M[i][1] + ( (M[i-2][2] - M[i-1][2]) div M[i-1][2] ) * M[i-1][1]
-        else [M[1][2], M[2][1]][i] : i in [1 .. #M]];
-  return G;
+  return SemiGroup(M[1][2], [M[i][1] : i in [2..#M]]);
 end intrinsic;
 
 intrinsic SemiGroup(f::RngMPolLocElt) -> []
@@ -106,11 +115,11 @@ SemiGroupMemberImpl := procedure(v, i, ~G, ~B, ~b, ~V)
   B[v + 1, i] := b; if b eq 1 then return; end if;
 end procedure;
 
-intrinsic SemiGroupMembership(v::RngIntElt, G::[ RngIntElt ]) -> BoolElt
+intrinsic SemiGroupMembership(v::RngIntElt, G::[RngIntElt]) -> BoolElt
 { Returns whether or not an integer v belongs to a numerical semigroup G and
   the coordinates v in the semigroup }
-require Gcd(G) eq 1: "Argument must be a numerical semigroup";
-  Sort(~G); V := [0 : i in [1..#G]];
+  // Any semigroup is valid.
+  V := [0 : i in [1..#G]];
   B := Matrix(v + 1, #G, [IntegerRing() | -1 : i in [1..(v + 1) * #G]]);
   for i in [1..#G] do B[0 + 1][i] := 1; end for;
   b := 0; SemiGroupMemberImpl(v, 1, ~G, ~B, ~b, ~V);
@@ -131,3 +140,40 @@ InversionFormula := function(M0, P, c)
     ni := Gcd(ni, mi); M1 cat:= [<mi, ni>];
   end for; return M1;
 end function;
+
+intrinsic IsPlaneCurveSemiGroup(G::[RngIntElt]) -> BoolElt
+{ Whether the semigroup is a plane curve semigroup or not }
+  if Gcd(G) ne 1 then return false; end if;
+  // e_i := gcd(\bar{m}_{i-1}, \bar{m}_i)
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  // n_i := e_i / e_{i + 1}
+  N := [1] cat [E[i] div E[i + 1] : i in [1..#G - 1]];
+  // n_i \bar{m}_{i} \in < m_{0}, ..., m_{i-1} > &&
+  // n_i \bar{m}_i < \bar{m}_{i + 1} &&
+  if not &and[SemiGroupMembership(N[i] * G[i], G[[1..i - 1]]) : i in [2..#G]] or
+     not &and[N[i] * G[i] lt G[i + 1] : i in [1..#G - 1]] then return false;
+  end if; return true;
+end intrinsic;
+
+forward SemiGroupCoordinatesImpl;
+
+SemiGroupCoordinatesImpl := procedure(v, i, ~G, ~V, ~N, ~X)
+  if v lt 0 or i gt #G then return; end if;
+  if v eq 0 then X cat:= [<V, &+[V[i] * N[i] : i in [1..#G]]>]; return; end if;
+  V[i] := V[i] + 1;
+  SemiGroupCoordinatesImpl(v - G[i], i, ~G, ~V, ~N, ~X);
+  V[i] := V[i] - 1;
+  SemiGroupCoordinatesImpl(v, i + 1, ~G, ~V, ~N, ~X);
+end procedure;
+
+intrinsic SemiGroupCoordinates(v::RngIntElt, G::[RngIntElt]) -> []
+{ Returns all the coordinates of a value v in the semigroup G and its
+  multiplicity at the origin }
+require Sort(G) eq G: "Generators of the semigroup must be sorted";
+  // Any semigroup is valid.
+  V := [0 : i in [1..#G]]; X := [];
+  C := CharExponents(G); n := C[1][2];
+  N := [1] cat [n div C[i][2] : i in [1..#C - 1]];
+  SemiGroupCoordinatesImpl(v, 1, ~G, ~V, ~N, ~X);
+  return X;
+end intrinsic;
