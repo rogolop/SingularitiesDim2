@@ -74,6 +74,7 @@ intrinsic SemiGroup(s::RngSerPuisElt) -> []
 { Computes a minimal set of generators for the semigroup of the
   Puiseux series of an irreducible plane curve }
   M := CharExponents(s); // (G)amma starts with <n, m, ...>
+require M[1][2] lt M[2][1]: "Puisuex series must be non-inverted";
   return SemiGroup(M[1][2], [M[i][1] : i in [2..#M]]);
 end intrinsic;
 
@@ -172,8 +173,8 @@ intrinsic SemiGroupCoordinates(v::RngIntElt, G::[RngIntElt]) -> []
 require Sort(G) eq G: "Generators of the semigroup must be sorted";
   // Any semigroup is valid.
   V := [0 : i in [1..#G]]; X := [];
-  C := CharExponents(G); n := C[1][2];
-  N := [1] cat [n div C[i][2] : i in [1..#C - 1]];
+  N := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [1] cat [G[1] div N[i] : i in [1..#N - 1]];
   SemiGroupCoordinatesImpl(v, 1, ~G, ~V, ~N, ~X);
   return X;
 end intrinsic;

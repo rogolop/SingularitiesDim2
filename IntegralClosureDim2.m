@@ -7,4 +7,5 @@
   BasePoints.m
   IntegralClosure.m
   Jacobian.m
+  Misc.m
 }
