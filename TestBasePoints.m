@@ -18,14 +18,25 @@ assert(Ncols(v) eq 0 and Nrows(v) eq 1);
 assert(#C eq 0);
 
 // Whole ring
-I := ideal<Q | 1 + y, x>;
+I := ideal<Q | 1 + y>;
+B := BasePoints(I: Coefficients := true);
+P := B[1]; v := B[2]; g := B[3]; C := B[4];
+assert(Ncols(P) eq 0 and Nrows(P) eq 0);
+assert(Ncols(v) eq 0 and Nrows(v) eq 1);
+assert(#C eq 0);
+assert(g eq 1);
+
+print "O";
+
+// Principal ideal;
+I := ideal<Q | y^2 - x^3>;
 B := BasePoints(I: Coefficients := true);
 P := B[1]; v := B[2]; g := B[3]; C := B[4];
 assert(Ncols(P) eq 0 and Nrows(P) eq 0);
 assert(Ncols(v) eq 0 and Nrows(v) eq 1);
 assert(#C eq 0);
 
-print "O";
+print "P";
 
 // Maximal ideal
 I := ideal<Q | x, y>;

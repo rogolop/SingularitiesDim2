@@ -29,7 +29,7 @@ intrinsic WeierstrassEquationDeterminant(s::RngSerPuisElt, Q::RngMPolLoc) -> Rng
   return Determinant(ScalarMatrix(n, y) - M);
 end intrinsic;
 
-// Factorices the weighted cluster (P, v) as a unique sum of
+// Factorices the weighted cluster (P, v, c) as a unique sum of
 // irreducible weighted clusters.
 ClusterFactorization := function(P, v, c)
   N := Transpose(P) * P; Ninv := N^-1; exc := v * N;
@@ -47,6 +47,7 @@ end function;
 
 // Returns the curve going sharply through (P, v).
 // Prerequisite: The last point of (P, v) must be free.
+// && the cluster (P, v, c) must be irreducible.
 SharplyCurve := function(P, v, c, Q)
   m := Gcd(Eltseq(v)); v := v div m; G := SemiGroup(P, v);
   M := CharExponents(G) cat [TailExponentMatrix(P, v)];
@@ -56,17 +57,46 @@ SharplyCurve := function(P, v, c, Q)
 
   // If the curve is inverted.
   if c[2][1] eq 0 then M := InversionFormula(M, P, c); end if;
-  P<t> := PuiseuxSeriesRing(Parent(c[1])); s := P!0; k := 1; n := M[1][2];
+  P<t> := PuiseuxSeriesRing(Parent(c[1][2])); s := P!0; k := 1; n := M[1][2];
   for i in [2..#M] do
     mj := M[i - 1][1]; nj := M[i - 1][2]; mi := M[i][1]; h0 := (mi - mj) div nj;
-    s +:= &+[P | c[k + l] * t^((mj + l * nj) / n) : l in [0..h0]];
+    s +:= &+[P | c[k + l][2] * t^((mj + l * nj) / n) : l in [0..h0]];
     k +:= &+Euclides(mi - mj, nj)[1];
   end for; return WeierstrassEquationDeterminant(s, Q)^m;
 end function;
 
 // Computes the curvettes a weighted cluster.
 Curvettes := function(P, v, c, Q)
-
+  P_inv := P^-1; Pt := Transpose(P); Pt_inv := Transpose(P_inv);
+  n := Ncols(P); isSat := &+[Pt[i] : i in [1..n]];
+  // 'Curvette' points are always free.
+  freePoints := [p : p in [1..n] | isSat[p] eq 0]; curvPoints := [];
+  for p in freePoints do
+    // Points proximate to 'p'.
+    prox_p := [i : i in [1..n] | Pt[p][i] eq -1];
+    // Points proximate to 'p' that are satellites.
+    prox_p_sat := [q : q in prox_p | isSat[q] eq -1];
+    // Select 'p' is if it has no proximate points in K (dead end) or
+    // all its proximate points in K are satellite (rupture point).
+    if #prox_p eq 0 or #prox_p eq #prox_p_sat then
+      curvPoints cat:= [p]; end if;
+  end for; C := []; // Now, construct equations for each curvette.
+  for p in curvPoints do
+    i_p := ZeroMatrix(IntegerRing(), 1, n); i_p[1][p] := 1;
+    e_p := i_p*P_inv; Ip := [i : i in [1..n] | e_p[1][i] ne 0];
+    v_p := e_p*Pt_inv; f_p := SharplyCurve(Submatrix(P, Ip, Ip),
+      Submatrix(v_p, [1], Ip), c[Ip], Q);
+    C cat:= [<f_p, v_p, e_p>];
+  end for;
+  // Let's check if we need to add x or y as a curvette. This will always
+  // happen in the irreducible case. Otherwise, we might have smooth curvettes
+  // playing the role of x and/or y.
+  e_O := ZeroMatrix(IntegerRing(), 1, n); e_O[1][1] := 1; v_O := e_O*Pt_inv;
+  if #[f : f in C | LeadingTerm(f[1]) eq Q.1] eq 0 then
+    C cat:= [<Q.1, v_O, e_O>]; end if;
+  if #[f : f in C | LeadingTerm(f[1]) eq Q.2] eq 0 then
+    C cat:= [<Q.2, v_O, e_O>]; end if;
+  return C;
 end function;
 
 // Unloads the weighted cluster represented by (P, v) where
@@ -81,12 +111,6 @@ Unloading := function(P, v)
     v +:= np * lp;
   end while; return v;
 end function;
-
-//CleanIdeal := function(I)
-//  J := Basis(I); for g in J do
-//    J := [f : f in J | not IsDivisibleBy(f, g) or f eq g];
-//  end for; return ideal<Parent(J[1]) | J>;
-//end function;
 
 //forward IntegralClosureImpl;
 //
@@ -119,7 +143,6 @@ end function;
 //end function;
 
 IntegralClosureIrreducible := function(P, v, c, Q)
-  print <P, v, c>;
   print Curvettes(P, v, c, Q);
   return 0;
 end function;
@@ -135,9 +158,10 @@ require Rank(Parent(Representative(I))) eq 2:
   P := B[1]; v := B[2]; f := B[3]; c := B[4];
   if Ncols(P) eq 0 then return ideal<Parent(f) | f>; end if;
 
-  Q<x, y> := LocalPolynomialRing(Parent(c[1]), 2, "lglex");
-  II := [ IntegralClosureIrreducible(P, vv, c, Q) :
-    vv in ClusterFactorization(P, v, c) ];
+  Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
+  Cv := Curvettes(P, v, c, Q);
+  II := [ IntegralClosureIrreducible(P, v_i, c, Cv) :
+    v_i in ClusterFactorization(P, v, c) ];
   //// Multiply by the affine part and return the std basis if requested.
   //J := ideal<Q | f> * CleanIdeal([i gt 1 select Self(i - 1) * II[i]
   //  else II[1] : i in [1..#II]][#II]);

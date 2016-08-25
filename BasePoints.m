@@ -29,7 +29,8 @@ ComputeBasePointsData := procedure(~P, ~EE, ~CC, ~S, N, ~E, ~C, ~V, ~v)
     E[m[2]] := E[m[2]] + m[1] * EE[i];
   end for; end for;
   // Merge the coefficients of each branch.
-  C := [Parent(CC[1][1]) | <0, 1> : i in [1..Ncols(P)]];
+  C := [#CC gt 0 select Parent(CC[1][2]) else RationalField()
+    | <0, 1> : i in [1..Ncols(P)]];
   for i in [1..#EE] do
     I := [j : j in [1..Ncols(P)] | EE[i][1][j] ne 0];
     for j in [1..#I] do C[I[j]] := CC[i][j]; end for;
@@ -112,6 +113,8 @@ require Rank(Parent(Representative(I))) eq 2:
   // Remove points not in the cluster of base points.
   P := Submatrix(P, I, I); v := Submatrix(v, [1], I); C := C[I];
 
+  // Select 1 as affine part iff F is a unit.
+  F := Evaluate(F, <0, 0>) ne 0 select Parent(F)!1 else F;
   if Coefficients then return <P, v, F, C>;
   else return <P, v, F>; end if;
 end intrinsic;

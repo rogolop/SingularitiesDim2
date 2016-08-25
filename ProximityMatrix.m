@@ -132,6 +132,7 @@ CoefficientsVectorBranch := function(s, maxContact)
 end function;
 
 function ProximityMatrixImpl2(contactMat, branchesProx)
+  if #branchesProx eq 0 then return <ScalarMatrix(0, 0), []>; end if;
   // ------------------------- Base case --------------------------------
   // If there is only branch, return its prox. matrix.
   if #branchesProx eq 1 then
@@ -194,7 +195,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
   end for;
   // Make sure rowPoint is returned in the original order.
   SS := []; for split in S do SS cat:= split; end for;
-  SS := [ Position(SS, i) : i in [1..#SS] ];
+  SS := [Position(SS, i) : i in [1..#SS]];
   return <P, rowPoint[SS]>;
 end function;
 
