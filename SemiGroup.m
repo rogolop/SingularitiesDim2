@@ -25,8 +25,8 @@ intrinsic CharExponents(f::RngMPolLocElt) -> []
 { Returns the characteristic exponents of an irreducible bivariate polynomials }
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   S := PuiseuxExpansionReduced(f);
-  if #S ne 1 then error "Argument must be an irreducible series"; end if;
-  return CharExponents(S[1]);
+  if #S ne 1 then error "Argument must be a non-empty irreducible series";
+  end if; return CharExponents(S[1]);
 end intrinsic;
 
 intrinsic CharExponents(G::[RngIntElt]) -> []
@@ -83,8 +83,8 @@ intrinsic SemiGroup(f::RngMPolLocElt) -> []
   and irreducible plane curve }
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   S := PuiseuxExpansionReduced(f);
-  if #S ne 1 then error "Argument must be an irreducible series"; end if;
-  return SemiGroup(S[1]);
+  if #S ne 1 then error "Argument must be a non-empty irreducible series";
+  end if; return SemiGroup(S[1]);
 end intrinsic;
 
 intrinsic SemiGroup(P::Mtrx, v::Mtrx) -> []

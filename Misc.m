@@ -70,11 +70,13 @@ intrinsic DeformationCurve(G::[RngIntElt]) -> []
 end intrinsic;
 
 intrinsic ESufficiencyDegree(f::RngMPolLocElt) -> RngIntElt
-{ Computes the E-sufficienty degree of a plane curve }
+{ Computes the E-sufficiency degree of a plane curve }
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
+require Evaluate(f, <0, 0>) eq 0: "Curve must be non-empty";
   branches := PuiseuxExpansion(f); P, E, _ := ProximityMatrixImpl(branches);
-require &+[Gcd(Eltseq(e)) : e in E] eq #E: "Curve must be reduced";
-  Pt := Transpose(P); N := Ncols(P); isSat := &+[Pt[i] : i in [1..N]];
+  ZZ := IntegerRing(); VS := RSpace(ZZ, Ncols(P));
+require &+[ZZ | Gcd(Eltseq(e)) : e in E] eq #E: "Curve must be reduced";
+  Pt := Transpose(P); N := Ncols(P); isSat := &+[VS | Pt[i] : i in [1..N]];
   // Construct subset T of free points of K.
   freePoints := [p : p in [1..N] | isSat[p] eq 0]; T := []; exc := &+E*P;
   for p in freePoints do
@@ -89,10 +91,38 @@ require &+[Gcd(Eltseq(e)) : e in E] eq #E: "Curve must be reduced";
   // Apply theorem 7.5.1 (Casas-Alvero)
   QQ<n> := PolynomialRing(RationalField()); Pt := ChangeRing(Pt, QQ);
   e := ChangeRing(&+E, QQ); i_O := ZeroMatrix(QQ, 1, N); i_O[1][1] := 1;
-  u := (i_O*n - e)*Pt^-1; ns := [];
+  u := (i_O*n - e)*Pt^-1; ns := [ZZ | ];
   for p in [1..N] do
     a := Roots(u[1][p])[1][1]; b := Ceiling(a);
-    ns cat:= [p in T select b else
-                a eq b select a + 1 else b];
+    ns cat:= [p in T select b else (a eq b select a + 1 else b)];
   end for; E := Max(ns); return E;
 end intrinsic
+
+intrinsic PolarInvariants(f::RngMPolLocElt) -> []
+{ Computes the polar invariants of a plane curve }
+require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
+require Evaluate(f, <0, 0>) eq 0: "Curve must be non-empty";
+  branches := PuiseuxExpansion(f); P, E, _ := ProximityMatrixImpl(branches);
+  ZZ := IntegerRing(); VS := RSpace(ZZ, Ncols(P));
+require &+[ZZ | Gcd(Eltseq(e)) : e in E] eq #E: "Curve must be reduced";
+  Pt := Transpose(P); N := Ncols(P); isSat := &+[VS | Pt[i] : i in [1..N]];
+  Pinv := P^-1; e := Transpose(&+E); exc := Pt*e; R := [];
+  for p in [1..N] do // Construct the set of rupture points.
+    // Points proximate to 'p' that are free.
+    prox_p_free := [i : i in [p + 1..N] | Pt[p][i] eq -1 and isSat[i] ne -1];
+    if (isSat[p] eq -1 and (#prox_p_free ge 1 or exc[p][1] gt 0)) or
+       (isSat[p] ne -1 and #prox_p_free ge 2) then R cat:= [p]; end if;
+  end for; I := [];
+  // For each rupture point compute the polar invariant.
+  for p in R do
+    i_p := ZeroMatrix(ZZ, 1, N); i_p[1][p] := 1;
+    e_p := i_p*Pinv; I cat:= [(e_p*e)[1][1] / e_p[1][1]];
+  end for; return I;
+end intrinsic;
+
+intrinsic ASufficiencyBound(f::RngMPolLocElt) -> RngIntElt
+{ Computes a lower-bound for the A-sufficiency degree of a plane curve }
+  I := PolarInvariants(f);
+  a := 2*Max(I); b := Ceiling(a);
+  return a eq b select a + 1 else b;
+end intrinsic;

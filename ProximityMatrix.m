@@ -6,7 +6,7 @@ PuiseuxInfo := function(s)
   I := []; E cat:= [T]; n := E[1][2];
   // For each characteristic exponent...
   for i in [2..#E] do
-    mj := E[i-1][1]; nj := E[i-1][2]; mi := E[i][1]; ni := E[i][2];
+    mj := E[i - 1][1]; nj := E[i - 1][2]; mi := E[i][1]; ni := E[i][2];
     h0 := (mi - mj) div nj; sat := Euclides(mi - mj, nj)[1];
     free := [<e, Coefficient(s, e)> : e in [(mj + k*nj)/n : k in [0..h0]]];
     Append(~I, <free, sat>);
@@ -72,25 +72,26 @@ ProximityMatrixBranch := function(s, maxContact : ExtraPoint := false)
     if ExtraPoint then maxContact := maxContact + 1; end if;
     // Construct a proximity matrix with free points only.
     P := ScalarMatrix(maxContact, 1);
-    for i in [2..maxContact] do P[i][i-1] := -1; end for;
+    for i in [2..maxContact] do P[i][i - 1] := -1; end for;
     return P;
   end if; // Otherwise, the branch is represented by a Puiseux series.
-  H := Prune([charExps[2] : charExps in PuiseuxInfo(s)]);
-  // Smooth inverted branches could have 2 char exponents.
+  H := [charExps[2] : charExps in PuiseuxInfo(s)];
+  // Smooth inverted branches could have 2 char exps. (Remove always tail)
   if #H eq 2 and H[1][1] eq 0 then H := Prune(H); end if;
-  // Dimension of the proximity matrix
+  Prune(~H);
+  // Dimension of the proximity matrix.
   N := Max(&+[IntegerRing() | &+h : h in H], maxContact);
   if ExtraPoint then N := N + 1; end if;
   // Construct a proximity matrix with free points only.
   P := ScalarMatrix(N, 1);
-  for i in [2..N] do P[i][i-1] := -1; end for;
+  for i in [2..N] do P[i][i - 1] := -1; end for;
   // Fill in satellite points proximities.
   for i in [1..#H] do
     // Inverted axis case.
     if i eq 1 and H[1][1] eq 0 then j0 := 3; else j0 := 2; end if;
     Hi := H[i]; Hi[#Hi] := Hi[#Hi] - 1;
     for j in [j0..#Hi] do
-      l := &+[IntegerRing() | &+H[k] : k in [1..i-1]] + &+Hi[1..j-1];
+      l := &+[IntegerRing() | &+H[k] : k in [1..i - 1]] + &+Hi[1..j - 1];
       for k in [1..Hi[j]] do P[l + k + 1, l] := -1; end for;
     end for;
   end for; return P;
@@ -184,7 +185,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
     InsertBlock(~P, M, k + 1, k + 1);
     // Sum k+1 and add the new point ({0}) to the position of the
     // points relative to the prox. matrix of the subdiagram.
-    splitRowPoint := [ [1] cat [p + k : p in pp] : pp in splitRowPoint ];
+    splitRowPoint := [[1] cat [p + k : p in pp] : pp in splitRowPoint];
     rowPoint cat:= splitRowPoint;
     // Use the information in splitRowPoint to set the proximities of
     // the current point into the new prox. matrix (P):
@@ -216,10 +217,10 @@ function ProximityMatrixImpl(branches: ExtraPoint := false)
     Max(ElementToSequence(contactMat[i])) + 1) : i in [1..#branches] ];
   // Get the proximity matrix of f and the position of each infinitely
   // near point inside the prox. matrix.
-  X := ProximityMatrixImpl2(contactMat, branchProx); P := X[1]; R := X[2];
+  X := ProximityMatrixImpl2(contactMat, branchProx);
   // Finally, rearrange each point's multiplicity so its position is coherent
   // coherent with the prox. matrix P.
-  E := [];
+  P := X[1]; R := X[2]; E := [RMatrixSpace(IntegerRing(), 1, Ncols(P)) | ];
   for i in [1..#branches] do
     Append(~E, ZeroMatrix(IntegerRing(), 1, Nrows(P)));
     for j in [1..#R[i]] do E[i][1, R[i][j]] := branchMult[i][j]; end for;
@@ -233,12 +234,10 @@ require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   // Get the general Puiseux expansion of f.
   branches := PuiseuxExpansion(f);
   P, E, C := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint);
-  if not Coefficients then return P, &+E;
-  else CC := [Parent(C[1][1]) | <1, 0> : i in [1..Nrows(P)]];
-    for i in [1..#E] do
-      I := [ j : j in [1..Ncols(P)] | E[i][1][j] ne 0 ];
-      for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
-    end for;
-  return <P, &+E, CC>;
-  end if;
+  if not Coefficients then return P, &+E; end if;
+  CC := [Parent(C[1][1]) | <1, 0> : i in [1..Nrows(P)]];
+  for i in [1..#E] do
+    I := [j : j in [1..Ncols(P)] | E[i][1][j] ne 0];
+    for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
+  end for; return <P, &+E, CC>;
 end intrinsic;

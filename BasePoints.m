@@ -51,7 +51,7 @@ require Rank(Parent(Representative(I))) eq 2:
   // Generators in G & fixed part F.
   G := Basis(I); F := Gcd(G); G := [ExactQuotient(g, F) : g in G];
 
-  // ------------ Compute all information --------------
+  ////////////// Compute all information ////////////////
   S := PuiseuxExpansion(G: Polynomial := true);
   P, EE, CC := ProximityMatrixImpl([* <s[1], 1> : s in S *]: ExtraPoint := true);
 
@@ -61,7 +61,7 @@ require Rank(Parent(Representative(I))) eq 2:
   v := []; // Virtual values of BP(I).
   ComputeBasePointsData(~P, ~EE, ~CC, ~S, #G, ~E, ~C, ~V, ~v);
 
-  // ------------ Add new free points ------------------
+  /////////////// Add new free points /////////////////////
   lastFree := [i : i in [1..Ncols(P)] | (&+P[1..Ncols(P)])[i] eq 1];
   points2test := #lastFree; idx := 1;
   // For each last free point on a branch...
@@ -84,7 +84,7 @@ require Rank(Parent(Representative(I))) eq 2:
   points2test := points2test - 1; idx := idx + 1;
   end while;
 
-  // ------------ Add new satellite points ------------------
+  /////////////// Add new satellite points /////////////////////
   points2test := Ncols(P) - 1; p := 2; // Do not start at the origin.
   while points2test gt 0 do
     // Values for the generators at point p.
@@ -107,7 +107,7 @@ require Rank(Parent(Representative(I))) eq 2:
   points2test := points2test - 1; p := p + 1;
   end while;
 
-  // ------------ Remove non base points ---------------
+  /////////////// Remove non base points ////////////////
   // Multiplicities for the cluster of base points.
   e := v * Transpose(P); I := [i : i in [1..Ncols(P)] | e[1][i] ne 0];
   // Remove points not in the cluster of base points.
