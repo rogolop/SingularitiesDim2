@@ -73,7 +73,7 @@ Curvettes := function(P, v, c, Q)
   freePoints := [p : p in [1..n] | isSat[p] eq 0]; curvPoints := [];
   for p in freePoints do
     // Points proximate to 'p'.
-    prox_p := [i : i in [1..n] | Pt[p][i] eq -1];
+    prox_p := [i : i in [p + 1..n] | Pt[p][i] eq -1];
     // Points proximate to 'p' that are satellites.
     prox_p_sat := [q : q in prox_p | isSat[q] eq -1];
     // Select 'p' is if it has no proximate points in K (dead end) or
@@ -142,8 +142,7 @@ end function;
 //    else II[1] : i in [1..#II]][#II])^m;
 //end function;
 
-IntegralClosureIrreducible := function(P, v, c, Q)
-  print Curvettes(P, v, c, Q);
+IntegralClosureIrreducible := function(P, v, c, Cv)
   return 0;
 end function;
 
@@ -160,8 +159,9 @@ require Rank(Parent(Representative(I))) eq 2:
 
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
   Cv := Curvettes(P, v, c, Q);
-  II := [ IntegralClosureIrreducible(P, v_i, c, Cv) :
-    v_i in ClusterFactorization(P, v, c) ];
+  print Cv;
+  //II := [ IntegralClosureIrreducible(P, v_i, c, Cv) :
+  //  v_i in ClusterFactorization(P, v, c) ];
   //// Multiply by the affine part and return the std basis if requested.
   //J := ideal<Q | f> * CleanIdeal([i gt 1 select Self(i - 1) * II[i]
   //  else II[1] : i in [1..#II]][#II]);

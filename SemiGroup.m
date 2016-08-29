@@ -131,7 +131,7 @@ InversionFormula := function(M0, P, c)
   // Compute the exp. of the last free pt. depending of the first char. exp.
   N := Ncols(P); Pt := Transpose(P); isSat := &+[Pt[j]: j in [1..N]];
   p := ([i : i in [1..N] | isSat[i] eq -1] cat [N + 1])[1] - 1;
-  m := ([i : i in [2..p] | c[i][1] eq 0] cat [0])[1] - 1;
+  m := ([i : i in [2..p] | c[i][1] ne 0] cat [0])[1] - 1;
   // Depending on whether 'm' is 0 or not, we have case (a) or case (b).
   M1 := [<0, m eq -1 select M0[2][1] else Lcm(M0[1][2], m)>]; k := #M0 - 1;
   M1 cat:= [<M0[1][2], Gcd(M1[1][2], M0[1][2])>]; i0 := m eq -1 select 2 else 1;

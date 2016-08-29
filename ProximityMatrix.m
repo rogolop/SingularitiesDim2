@@ -8,7 +8,7 @@ PuiseuxInfo := function(s)
   for i in [2..#E] do
     mj := E[i-1][1]; nj := E[i-1][2]; mi := E[i][1]; ni := E[i][2];
     h0 := (mi - mj) div nj; sat := Euclides(mi - mj, nj)[1];
-    free := [ <e, Coefficient(s, e)> : e in [(mj + k*nj)/n : k in [0..h0]] ];
+    free := [<e, Coefficient(s, e)> : e in [(mj + k*nj)/n : k in [0..h0]]];
     Append(~I, <free, sat>);
   end for; return I;
 end function;
@@ -76,6 +76,9 @@ ProximityMatrixBranch := function(s, maxContact : ExtraPoint := false)
     return P;
   end if; // Otherwise, the branch is represented by a Puiseux series.
   H := Prune([charExps[2] : charExps in PuiseuxInfo(s)]);
+  // Smooth inverted branches could have 2 char exponents.
+  if #H eq 2 and H[1][1] eq 0 then H := Prune(H); end if;
+  // Dimension of the proximity matrix
   N := Max(&+[IntegerRing() | &+h : h in H], maxContact);
   if ExtraPoint then N := N + 1; end if;
   // Construct a proximity matrix with free points only.

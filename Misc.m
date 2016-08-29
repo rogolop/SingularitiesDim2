@@ -1,3 +1,4 @@
+import "ProximityMatrix.m": ProximityMatrixImpl;
 
 intrinsic YanoExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
 { Computes the generating sequence for the generic b-exponents
@@ -67,3 +68,31 @@ intrinsic DeformationCurve(G::[RngIntElt]) -> []
 
   return II;
 end intrinsic;
+
+intrinsic ESufficiencyDegree(f::RngMPolLocElt) -> RngIntElt
+{ Computes the E-sufficienty degree of a plane curve }
+require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
+  branches := PuiseuxExpansion(f); P, E, _ := ProximityMatrixImpl(branches);
+require &+[Gcd(Eltseq(e)) : e in E] eq #E: "Curve must be reduced";
+  Pt := Transpose(P); N := Ncols(P); isSat := &+[Pt[i] : i in [1..N]];
+  // Construct subset T of free points of K.
+  freePoints := [p : p in [1..N] | isSat[p] eq 0]; T := []; exc := &+E*P;
+  for p in freePoints do
+    // Points proximate to 'p'.
+    prox_p := [i : i in [p + 1..N] | Pt[p][i] eq -1];
+    // Points proximate to 'p' that are satellites.
+    prox_p_sat := [q : q in prox_p | isSat[q] eq -1];
+    // Select 'p' if all its proximate points in K are
+    // satellite and its excess is equal to 1.
+    if #prox_p eq #prox_p_sat and exc[1][p] eq 1 then T cat:= [p]; end if;
+  end for;
+  // Apply theorem 7.5.1 (Casas-Alvero)
+  QQ<n> := PolynomialRing(RationalField()); Pt := ChangeRing(Pt, QQ);
+  e := ChangeRing(&+E, QQ); i_O := ZeroMatrix(QQ, 1, N); i_O[1][1] := 1;
+  u := (i_O*n - e)*Pt^-1; ns := [];
+  for p in [1..N] do
+    a := Roots(u[1][p])[1][1]; b := Ceiling(a);
+    ns cat:= [p in T select b else
+                a eq b select a + 1 else b];
+  end for; E := Max(ns); return E;
+end intrinsic
