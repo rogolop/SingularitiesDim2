@@ -77,10 +77,9 @@ ProximityMatrixBranch := function(s, maxContact : ExtraPoint := false)
   end if; // Otherwise, the branch is represented by a Puiseux series.
   H := [charExps[2] : charExps in PuiseuxInfo(s)];
   // Smooth inverted branches could have 2 char exps. (Remove always tail)
-  if #H eq 2 and H[1][1] eq 0 then H := Prune(H); end if;
-  Prune(~H);
+  if #H eq 2 and #H[1] eq 2 and H[1][1] eq 0 then Prune(~H); end if;
   // Dimension of the proximity matrix.
-  N := Max(&+[IntegerRing() | &+h : h in H], maxContact);
+  N := Max(&+[IntegerRing() | &+h : h in Prune(H)], maxContact);
   if ExtraPoint then N := N + 1; end if;
   // Construct a proximity matrix with free points only.
   P := ScalarMatrix(N, 1);
