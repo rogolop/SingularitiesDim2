@@ -1,11 +1,11 @@
 AttachSpec("./IntegralClosureDim2.spec");
 Q<x, y> := LocalPolynomialRing(RationalField(), 2, "lglex");
 
-function JacobiIdeal1(f)
+function GradientIdeal(f)
   return ideal<Q | Derivative(f, 1), Derivative(f, 2)>;
 end function;
 
-function JacobiIdeal2(f)
+function JacobianIdeal(f)
   return ideal<Q | f, Derivative(f, 1), Derivative(f, 2)>;
 end function;
 

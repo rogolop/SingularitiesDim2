@@ -29,32 +29,30 @@ intrinsic WeierstrassEquationDeterminant(s::RngSerPuisElt, Q::RngMPolLoc) -> Rng
   return Determinant(ScalarMatrix(n, y) - M);
 end intrinsic;
 
-// Factorices the weighted cluster (P, v, c) as a unique sum of
+// Factorices the weighted cluster (P, v) as a unique sum of
 // irreducible weighted clusters.
-ClusterFactorization := function(P, v, c)
-  N := Transpose(P) * P; Ninv := N^-1; exc := v * N;
-  n := Ncols(P); ZZ := IntegerRing();
-
+ClusterFactorization := function(P, v)
+  N := Transpose(P) * P; Ninv := N^-1; exc := v * N; n := Ncols(P);
   B := []; // For each point with strictly positive excess.
   for i in [i : i in [1..n] | exc[1][i] gt 0] do
     p := i; I := [p];
     while p ne 1 do // Traverse the cluster back to the origin
       p := [j : j in Reverse([1..n]) | P[p][j] eq -1][1]; I := [p] cat I;
     end while;
-    v := ZeroMatrix(ZZ, 1, n); v[1][i] := exc[1][i]; v := v * Ninv; B cat:= [v];
+    v := ZeroMatrix(IntegerRing(), 1, n); v[1][i] := exc[1][i];
+    v := v * Ninv; B cat:= [v];
   end for; return B;
 end function;
 
 // Returns the curve going sharply through (P, v).
-// Prerequisite: The last point of (P, v) must be free.
-// && the cluster (P, v, c) must be irreducible.
+// Prerequisite: The cluster (P, v, c) must be irreducible.
+// && the last point of (P, v) must be free.
 SharplyCurve := function(P, v, c, Q)
   m := Gcd(Eltseq(v)); v := v div m; G := SemiGroup(P, v);
   M := CharExponents(G) cat [TailExponentMatrix(P, v)];
   // If the curve is the y-axis.
   if #G eq 1 and #c gt 1 and &and[c[i][1] eq 0: i in [2..#c]] then
   return Q.1; end if;
-
   // If the curve is inverted.
   if c[2][1] eq 0 then M := InversionFormula(M, P, c); end if;
   P<t> := PuiseuxSeriesRing(Parent(c[1][2])); s := P!0; k := 1; n := M[1][2];
@@ -86,16 +84,16 @@ Curvettes := function(P, v, c, Q)
     e_p := i_p*P_inv; Ip := [i : i in [1..n] | e_p[1][i] ne 0];
     v_p := e_p*Pt_inv; f_p := SharplyCurve(Submatrix(P, Ip, Ip),
       Submatrix(v_p, [1], Ip), c[Ip], Q);
-    C cat:= [<f_p, v_p, e_p>];
+    C cat:= [<[<f_p, 1>], v_p, e_p>];
   end for;
   // Let's check if we need to add x or y as a curvette. This will always
   // happen in the irreducible case. Otherwise, we might have smooth curvettes
   // playing the role of x and/or y.
   e_O := ZeroMatrix(IntegerRing(), 1, n); e_O[1][1] := 1; v_O := e_O*Pt_inv;
-  if #[f : f in C | LeadingTerm(f[1]) eq Q.1] eq 0 then
-    C cat:= [<Q.1, v_O, e_O>]; end if;
-  if #[f : f in C | LeadingTerm(f[1]) eq Q.2] eq 0 then
-    C cat:= [<Q.2, v_O, e_O>]; end if;
+  if #[f : f in C | LeadingMonomial(f[1][1][1]) eq Q.1] eq 0 then
+    C cat:= [<[<Q.1, 1>], v_O, e_O>]; end if;
+  if #[f : f in C | LeadingMonomial(f[1][1][1]) eq Q.2] eq 0 then
+    C cat:= [<[<Q.2, 1>], v_O, e_O>]; end if;
   return C;
 end function;
 
@@ -112,58 +110,88 @@ Unloading := function(P, v)
   end while; return v;
 end function;
 
-//forward IntegralClosureImpl;
-//
-//IntegralClosureImpl := function(P, v, c, Q)
-//  // If the cluster has a single point, return a power of the maximal ideal.
-//  if Ncols(P) eq 1 then return (ideal<Q | Q.1, Q.2>)^v[1][1]; end if;
-//
-//  // Compute the curvete going through the current cluster.
-//  N := Ncols(P); m := Gcd(Eltseq(v)); v := v div m; ZZ := IntegerRing();
-//  isFree := &+[Transpose(P)[i] : i in [1..N]]; // Last free point.
-//  p := [i : i in Reverse([1..N]) | isFree[i] eq 0][1]; Ip := [1..p];
-//  Pp := Submatrix(P, Ip, Ip); vp := ZeroMatrix(ZZ, 1, #Ip); vp[1][#Ip] := 1;
-//  vp := vp * (Transpose(Pp) * Pp)^-1; n := v[1][1] div vp[1][1]; cp := c[Ip];
-//  f := SharplyCurve(Pp, vp, cp, Q); // A sharply curve is enough.
-//
-//  // Add free point at the origin & unload.
-//  P := InsertBlock(ScalarMatrix(N + 1, 1), P, 1, 1);
-//  v := InsertBlock(ZeroMatrix(ZZ, 1, N + 1), v, 1, 1);
-//  P[N + 1][1] := -1; v[1][N + 1] := v[1][1] + 1;
-//  v := Unloading(P, v); e := v * Transpose(P); // Unload & get multiplicities.
-//  I := [i : i in [1..N] | e[1][i] ne 0]; // Remove empty points.
-//  P := Submatrix(P, I, I); v := Submatrix(v, [1], I); c := c[I];
-//
-//  // Apply Zariski theorem on complete ideals and recurse.
-//  II := [ IntegralClosureImpl(K[1], K[2], K[3], Q) :
-//    K in ClusterFactorization(P, v, c) ];
-//  // Return ((f^n) + \prod_{i=1}^{#II} I_i)^m.
-//  return CleanIdeal(ideal<Q | f^n> + [i gt 1 select Self(i-1) * II[i]
-//    else II[1] : i in [1..#II]][#II])^m;
-//end function;
-
-IntegralClosureIrreducible := function(P, v, c, Cv)
-  return 0;
+// Returns the datum corresponding to multipling the datum of the
+// curvettes f and g.
+ProductCurvettes := function(f, g)
+  fg := f[1] cat g[1]; S := {h[1] : h in fg};
+  return <[<s, &+[h[2] : h in fg | h[1] eq s]> : s in S],
+    f[2] + g[2], f[3] + g[3]>;
 end function;
 
-intrinsic IntegralClosure(I::RngMPolLoc) -> RngMPolLoc
+// Returns the datum corresponding to raising the datum representing
+// the curvette f to alpha \in \mathbb{N}.
+PowerCurvette := function(f, alpha)
+  return <[<f_i[1], alpha * f_i[2]> : f_i in f[1]], alpha * f[2], alpha * f[3]>;
+end function;
+
+// Multiplies together all the 'ideals' of curvettes in the sequence S.
+ProductIdeals := function(S)
+return Reverse([i gt 1 select SetToSequence({ProductCurvettes(f, g) : f in S[i],
+    g in Self(i - 1)}) else S[1] : i in [1..#S]])[1];
+end function;
+
+// Raises the 'ideal' of curvettes to the alpha-th power.
+PowerIdeal := function(I, alpha)
+  return Reverse([i gt 1 select ProductIdeals([I] cat [Self(i - 1)]) else I :
+    i in [1..alpha]])[1];
+end function;
+
+forward IntegralClosureIrreducible;
+
+IntegralClosureIrreducible := function(P, e, v_i, Cv, m, Q)
+  // If the cluster is a power of the maximal ideal, select all the
+  // possible generators for a maximal ideal from the curvettes.
+  alpha := Gcd(Eltseq(v_i)); v_i := v_i div alpha;
+  if v_i eq m then
+    X := [f : f in Cv | LeadingMonomial(f[1][1][1]) eq Q.1];
+    Y := [f : f in Cv | LeadingMonomial(f[1][1][1]) eq Q.2];
+    _, i1 := Max([(f[3] * e)[1][1] : f in X]);
+    _, i2 := Max([(f[3] * e)[1][1] : f in Y]);
+    return PowerIdeal([X[i1], Y[i2]], alpha);
+  end if;
+
+  // Find the curvettes going through the current cluster.
+  Pt := Transpose(P); n := Ncols(P); isFree := &+[Pt[i] : i in [1..n]];
+  e_i := v_i*Pt; p := [j : j in Reverse([1..n]) | isFree[j] eq 0 and
+    e_i[1][j] ne 0][1]; // Last free point.
+  Fs := [f : f in Cv | f[3][1][p] gt 0 and f[3][1][1] le v_i[1][1]][1];
+  beta := v_i[1][1] div Fs[3][1][1];
+
+  // Increase the value at the origin & unload.
+  v := v_i; v[1][1] +:= 1; v := Unloading(P, v);
+  // Apply Zariski theorem on complete ideals and recurse.
+  Is := [IntegralClosureIrreducible(P, e, v_j, Cv, m, Q) :
+    v_j in ClusterFactorization(P, v)];
+
+  // Compute (f^\beta) + \prod_{i=1}^{#II} I_i and clean gens.
+  return PowerIdeal([PowerCurvette(Fs, beta)] cat [g : g in ProductIdeals(Is)
+    | &or[g[2][1][i] lt (v_i + m)[1][i] : i in [1..n]]], alpha);
+end function;
+
+intrinsic IntegralClosure(I::RngMPolLoc) -> []
 { Computes the integral closure of a bivariate polynomial ideal }
 require Type(Representative(I)) eq RngMPolLocElt:
   "Argument must be a polynomial ideal";
 require Rank(Parent(Representative(I))) eq 2:
   "Argument must be a bivariate polynomial ideal";
-  // Compute the weighted cluster of base points.
-  B := BasePoints(I : Coefficients := true);
-  P := B[1]; v := B[2]; f := B[3]; c := B[4];
-  if Ncols(P) eq 0 then return ideal<Parent(f) | f>; end if;
 
+  // Compute the weighted cluster of base points.
+  B := BasePoints(I : Coefficients := true); P := B[1];
+  Pt := Transpose(P); v := B[2]; f := B[3]; c := B[4]; n := Ncols(P);
+  if n eq 0 then return [[<Parent(f)!f, 1>]]; end if;
+
+  // Compute the curvettes of the weighted cluster of base points.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
-  Cv := Curvettes(P, v, c, Q);
-  print Cv;
-  //II := [ IntegralClosureIrreducible(P, v_i, c, Cv) :
-  //  v_i in ClusterFactorization(P, v, c) ];
-  //// Multiply by the affine part and return the std basis if requested.
-  //J := ideal<Q | f> * CleanIdeal([i gt 1 select Self(i - 1) * II[i]
-  //  else II[1] : i in [1..#II]][#II]);
-  return [];
+  Cv := Curvettes(P, v, c, Q); e := P*Transpose(v);
+  // Sort curvettes by increasing intersection multiplicity with BP(I).
+  Sort(~Cv, func<x, y | (y[3]*e - x[3]*e)[1][1]>);
+  // Compute the maximal ideal values.
+  m := ZeroMatrix(IntegerRing(), 1, n); m[1][1] := 1; m := m*Pt^-1;
+
+  // Compute systems of generators of irreducible cluster.
+  Is := [IntegralClosureIrreducible(P, P*Transpose(v_i), v_i, Cv, m, Q) :
+    v_i in ClusterFactorization(P, v)];
+  // Multiply all the ideals together, add the affine part and clean gens.
+  return [g[1] cat (f eq 1 select [] else [<Q!f, 1>]) : g in ProductIdeals(Is)
+    | &or[g[2][1][i] lt (v + m)[1][i] : i in [1..n]]];
 end intrinsic;

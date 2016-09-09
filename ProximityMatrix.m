@@ -136,12 +136,12 @@ end function;
 
 function ProximityMatrixImpl2(contactMat, branchesProx)
   if #branchesProx eq 0 then return <ScalarMatrix(0, 0), []>; end if;
-  // ------------------------- Base case --------------------------------
+  /////////////////////////// Base case ////////////////////////////////
   // If there is only branch, return its prox. matrix.
   if #branchesProx eq 1 then
     return <branchesProx[1], [[i : i in [1..Ncols(branchesProx[1])]]]>;
   end if;
-  // ------------------- Compute the splits -----------------------------
+  ////////////////////// Compute the splits /////////////////////////////
   // Substract one to all the contact numbers except the diagonal ones.
   N := Nrows(contactMat); ZZ := IntegerRing();
   contactMat := contactMat - Matrix(N, [ZZ | 1: i in [1..N^2]])
@@ -163,7 +163,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
     // Compute the contact matrix of the remaining brances.
     C := Submatrix(C, otherBranchIdx, otherBranchIdx);
   end while;
-  // ---------- Compute the prox. matrix of each subdiagram -------------
+  ///////////// Compute the prox. matrix of each subdiagram /////////////
   // Substract one to all the contact numbers and erase the
   // first point of the proximity matricies of the current
   // branches since we are moving down the Enriques diagram.
@@ -171,7 +171,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
   // Traverse each sub-diagram recursivaly.
   splitResult := [* ProximityMatrixImpl2(Submatrix(contactMat, split, split),
     newBranchProx[split]) : split in S *];
-  // -------------- Merge the prox. matrix of each split ----------------
+  ///////////////// Merge the prox. matrix of each split ////////////////
   // Create the matrix that will hold the proximity branch of this subdiagram.
   numPoints := &+[ZZ | Ncols(X[1]) : X in splitResult] + 1;
   P := ScalarMatrix(numPoints, 1); rowPoint := []; k := 1;
