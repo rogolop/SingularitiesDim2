@@ -6,6 +6,6 @@
   ProximityMatrix.m
   BasePoints.m
   IntegralClosure.m
-  Jacobian.m
+  Filtration.m
   Misc.m
 }

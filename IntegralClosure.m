@@ -138,11 +138,11 @@ end function;
 
 forward IntegralClosureIrreducible;
 
-IntegralClosureIrreducible := function(P, e, v_i, Cv, m, Q)
+IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
   // If the cluster is a power of the maximal ideal, select all the
   // possible generators for a maximal ideal from the curvettes.
   alpha := Gcd(Eltseq(v_i)); v_i := v_i div alpha;
-  if v_i eq m then
+  if v_i eq max then
     X := [f : f in Cv | LeadingMonomial(f[1][1][1]) eq Q.1];
     Y := [f : f in Cv | LeadingMonomial(f[1][1][1]) eq Q.2];
     _, i1 := Max([(f[3] * e)[1][1] : f in X]);
@@ -160,12 +160,12 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, m, Q)
   // Increase the value at the origin & unload.
   v := v_i; v[1][1] +:= 1; v := Unloading(P, v);
   // Apply Zariski theorem on complete ideals and recurse.
-  Is := [IntegralClosureIrreducible(P, e, v_j, Cv, m, Q) :
+  Is := [IntegralClosureIrreducible(P, e, v_j, Cv, max, Q) :
     v_j in ClusterFactorization(P, v)];
 
   // Compute (f^\beta) + \prod_{i=1}^{#II} I_i and clean gens.
   return PowerIdeal([PowerCurvette(Fs, beta)] cat [g : g in ProductIdeals(Is)
-    | &or[g[2][1][i] lt (v_i + m)[1][i] : i in [1..n]]], alpha);
+    | &or[g[2][1][i] lt (v_i + max)[1][i] : i in [1..n]]], alpha);
 end function;
 
 intrinsic IntegralClosure(I::RngMPolLoc) -> []
@@ -186,12 +186,12 @@ require Rank(Parent(Representative(I))) eq 2:
   // Sort curvettes by increasing intersection multiplicity with BP(I).
   Sort(~Cv, func<x, y | (y[3]*e - x[3]*e)[1][1]>);
   // Compute the maximal ideal values.
-  m := ZeroMatrix(IntegerRing(), 1, n); m[1][1] := 1; m := m*Pt^-1;
+  max := ZeroMatrix(IntegerRing(), 1, n); max[1][1] := 1; max := max*Pt^-1;
 
   // Compute systems of generators of irreducible cluster.
-  Is := [IntegralClosureIrreducible(P, P*Transpose(v_i), v_i, Cv, m, Q) :
+  Is := [IntegralClosureIrreducible(P, P*Transpose(v_i), v_i, Cv, max, Q) :
     v_i in ClusterFactorization(P, v)];
   // Multiply all the ideals together, add the affine part and clean gens.
   return [g[1] cat (f eq 1 select [] else [<Q!f, 1>]) : g in ProductIdeals(Is)
-    | &or[g[2][1][i] lt (v + m)[1][i] : i in [1..n]]];
+    | &or[g[2][1][i] lt (v + max)[1][i] : i in [1..n]]];
 end intrinsic;

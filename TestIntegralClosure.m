@@ -529,3 +529,309 @@ assert(P0 eq P1); assert(v0 eq v1); assert(g0 eq g1);
 assert(PP0 eq PP1); assert(vv0 eq vv1); assert(gg0 eq gg1);
 
 print "A9";
+
+// A10
+f := y*(y^2 - x^3)*(y - x^2);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 5);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A10
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 5);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+
+print "A10";
+
+// A11
+f := y*(y^2 - x^3)*(y - x^2)*(y - x^3);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 7);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+
+// A11
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 7);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+
+print "A11";
+
+// A12
+f := (y^2 - x^3)*(y^2 - x^5);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 5);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+//assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A12
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 5);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+//assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+
+print "A12";
+
+// A13
+f := y*(y^2 - x^3)*(y^2 - x^5);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 7);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A13
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 7);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+assert(P0 eq P1); assert(v0 eq v1); assert(g0 eq g1);
+assert(PP0 eq PP1); assert(vv0 eq vv1); assert(gg0 eq gg1);
+
+print "A13";
+
+// A14
+f := (y^3 - x^5)*((y- x^2)^3 - x^5);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 7);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A14
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 7);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+assert(P0 eq P1); assert(v0 eq v1); assert(g0 eq g1);
+assert(PP0 eq PP1); assert(vv0 eq vv1); assert(gg0 eq gg1);
+
+print "A14";
+
+// A15
+f := y*(y - x^2)*(y + x^2);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(#II0 eq 4 and #JJ0 eq 4);
+
+// A15
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(#II1 eq 4 and #JJ1 eq 4);
+
+print "A15";
+
+// A16
+f := y*(y - x^2)*(y + x^2)*(y^3 - x^5)*((y - x^2)^3 - x^5);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(#II0 eq 13 and #JJ0 eq 13);
+
+// A16
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(#II1 eq 13 and #JJ1 eq 13);
+
+print "A16";
+
+// A18
+f := y^7 - x^16;
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 7);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A18
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 7);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+assert(P0 eq P1); assert(v0 eq v1); assert(g0 eq g1);
+assert(PP0 eq PP1); assert(vv0 eq vv1); assert(gg0 eq gg1);
+
+print "A18";
+
+// A19
+f := y^10 - x^23;
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 10);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A19
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 10);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+assert(P0 eq P1); assert(v0 eq v1); assert(g0 eq g1);
+assert(PP0 eq PP1); assert(vv0 eq vv1); assert(gg0 eq gg1);
+
+print "A19";
+
+// A20
+f := (y - x)*(y^2 - x^3)*(x^2 - y^3);
+I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
+J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
+assert(ConvertToIdeal(JJ0, Q) eq ConvertToIdeal(II0, Q));
+assert(#II0 eq 5);
+II0 := ConvertToIdeal(II0, Q);
+B0 := BasePoints(I0 : Coefficients := true);
+P0 := B0[1]; v0 := B0[2]; g0 := B0[3]; C0 := B0[4];
+BB0 := BasePoints(II0 : Coefficients := true);
+PP0 := BB0[1]; vv0 := BB0[2]; gg0 := BB0[3]; CC0 := BB0[4];
+assert(Ncols(P0) eq Ncols(PP0)); assert(g0 eq gg0);
+assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0);
+
+// A19
+f := Evaluate(f, <y, x>);
+I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
+J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
+assert(ConvertToIdeal(JJ1, Q) eq ConvertToIdeal(II1, Q));
+assert(#II1 eq 5);
+II1 := ConvertToIdeal(II1, Q);
+B1 := BasePoints(I1 : Coefficients := true);
+P1 := B1[1]; v1 := B1[2]; g1 := B1[3]; C1 := B1[4];
+BB1 := BasePoints(II1 : Coefficients := true);
+PP1 := BB1[1]; vv1 := BB1[2]; gg1 := BB1[3]; CC1 := BB1[4];
+assert(Ncols(P1) eq Ncols(PP1)); assert(g1 eq gg1);
+assert(P1 eq PP1); assert(v1 eq vv1); assert(g1 eq gg1);
+
+assert(II0 eq ideal<Q | [Evaluate(f, <y, x>) : f in Basis(II1)]>);
+assert(Ncols(P0) eq Ncols(P1)); assert(g0 eq g1);
+assert(Ncols(PP0) eq Ncols(PP1)); assert(gg0 eq gg1);
+assert(P0 eq P1); assert(v0 eq v1); assert(g0 eq g1);
+assert(PP0 eq PP1); assert(vv0 eq vv1); assert(gg0 eq gg1);
+
+print "A20";
