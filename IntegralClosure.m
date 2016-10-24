@@ -154,7 +154,7 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
   Pt := Transpose(P); n := Ncols(P); isFree := &+[Pt[i] : i in [1..n]];
   e_i := v_i*Pt; p := [j : j in Reverse([1..n]) | isFree[j] eq 0 and
     e_i[1][j] ne 0][1]; // Last free point.
-  Fs := [f : f in Cv | f[3][1][p] gt 0 and f[3][1][1] le v_i[1][1]][1];
+  Fs := [f : f in Reverse(Cv) | f[3][1][p] gt 0 and f[3][1][1] le v_i[1][1]][1];
   beta := v_i[1][1] div Fs[3][1][1];
 
   // Increase the value at the origin & unload.

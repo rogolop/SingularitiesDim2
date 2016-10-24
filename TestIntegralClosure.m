@@ -71,7 +71,7 @@ print "p";
 
 // Cusp ideal
 I0 := ideal<Q | y^2, x^3>;
-II0 := IntegralClosure(I0 );
+II0 := IntegralClosure(I0);
 assert(#II0 eq 3);
 assert(#II0[1] eq 1); f1 := II0[1];
 assert(#II0[2] eq 1); f2 := II0[2];
@@ -90,7 +90,7 @@ assert(P0 eq PP0); assert(v0 eq vv0); assert(g0 eq gg0); assert(C0 eq Parent(C0)
 
 // Cups ideal
 I1 := ideal<Q | x^2, y^3>;
-II1 := IntegralClosure(I1 );
+II1 := IntegralClosure(I1);
 assert(#II1 eq 3);
 assert(#II1[1] eq 1); f1 := II1[1];
 assert(#II1[2] eq 2); f2 := II1[2];
@@ -718,13 +718,13 @@ print "A15";
 f := y*(y - x^2)*(y + x^2)*(y^3 - x^5)*((y - x^2)^3 - x^5);
 I0 := GradientIdeal(f); II0 := IntegralClosure(I0);
 J0 := JacobianIdeal(f); JJ0 := IntegralClosure(J0);
-assert(#II0 eq 13 and #JJ0 eq 13);
+assert(#II0 eq 15 and #JJ0 eq 15);
 
 // A16
 f := Evaluate(f, <y, x>);
 I1 := GradientIdeal(f); II1 := IntegralClosure(I1);
 J1 := JacobianIdeal(f); JJ1 := IntegralClosure(J1);
-assert(#II1 eq 13 and #JJ1 eq 13);
+assert(#II1 eq 15 and #JJ1 eq 15);
 
 print "A16";
 

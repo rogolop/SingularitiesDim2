@@ -106,8 +106,8 @@ require Evaluate(f, <0, 0>) eq 0: "Curve must be non-empty";
   ZZ := IntegerRing(); VS := RSpace(ZZ, Ncols(P));
 require &+[ZZ | Gcd(Eltseq(e)) : e in E] eq #E: "Curve must be reduced";
   Pt := Transpose(P); N := Ncols(P); isSat := &+[VS | Pt[i] : i in [1..N]];
-  Pinv := P^-1; e := Transpose(&+E); exc := Pt*e; R := [];
-  for p in [1..N] do // Construct the set of rupture points.
+  Pinv := P^-1; e := Transpose(&+E); exc := Pt*e; R := [1];
+  for p in [2..N] do // Construct the set of rupture points.
     // Points proximate to 'p' that are free.
     prox_p_free := [i : i in [p + 1..N] | Pt[p][i] eq -1 and isSat[i] ne -1];
     if (isSat[p] eq -1 and (#prox_p_free ge 1 or exc[p][1] gt 0)) or
