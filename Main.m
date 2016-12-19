@@ -9,6 +9,10 @@ function JacobianIdeal(f)
   return ideal<Q | f, Derivative(f, 1), Derivative(f, 2)>;
 end function;
 
+function ConvertToIdeal(I, Q)
+  return ideal<Q | [&*[f_i[1]^f_i[2] : f_i in f] : f in I]>;
+end function;
+
 // Casas' book example.
 book := y^4 - x^2*y^2 - 2*x^4*y^2 + x^4*y + x^5*y + x^7;
 

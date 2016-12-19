@@ -8,4 +8,5 @@
   IntegralClosure.m
   Filtration.m
   Misc.m
+  CharPos.m
 }

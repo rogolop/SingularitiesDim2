@@ -111,27 +111,3 @@ require n ge 0: "Second argument must be a non-negative integer";
   T := [ConvertToIdeal(Ci, Q) meet I : Ci in C];
   return [i : i in [1..#T - 1] | T[i] eq T[i + 1]];
 end intrinsic;
-
-//intrinsic ModularPower(f::RngMPolLocElt, n::RngIntElt, I::RngMPolLoc)
-//  -> RngMPolLocElt
-//{ Returns f^n mod I }
-//  p := Characteristic(CoefficientRing(Parent(f)));
-//require p gt 0: "Computations only valid over finite fields";
-//require n ge 0: "Second argument must be a non-negative integer";
-//  g := 1; f := NormalForm(f, I);
-//  while n gt 0 do
-//    if n mod p ne 0 then g := NormalForm(g * f^(n mod p), I); end if;
-//    n div:= p; f := NormalForm(f^p, I);
-//  end while; return g;
-//end intrinsic;
-//
-//intrinsic ModularPowerBinary(f::RngMPolLocElt, n::RngIntElt, I::RngMPolLoc)
-//  -> RngMPolLocElt
-//{ Returns f^n mod I }
-//require n ge 0: "Second argument must be a non-negative integer";
-//  g := 1; f := NormalForm(f, I);
-//  while n gt 0 do
-//    if n mod 2 ne 0 then g := NormalForm(g * f, I); end if;
-//    n div:= 2; f := NormalForm(f * f, I);
-//  end while; return g;
-//end intrinsic;
