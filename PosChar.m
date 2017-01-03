@@ -5,8 +5,10 @@ ModularExpBinary := procedure(f, n, ~I, ~M)
   while n gt 0 do
     if n mod 2 ne 0 then
       n_2 := n mod 2; m +:= i * n_2;
-      if M[i * n_2] eq -1 then M[i * n_2] := NormalForm(f^n_2, I); end if; f_n2 := M[i * n_2];
-      if M[m] eq -1 then M[m] := NormalForm(g * f_n2, I); end if; g := M[m];
+      if M[m] eq -1 then
+        if M[i * n_2] eq -1 then M[i * n_2] := NormalForm(f^n_2, I); end if;
+        f_n2 := M[i * n_2]; M[m] := NormalForm(g * f_n2, I);
+      end if; g := M[m];
     end if;
     n div:= 2; i *:= 2;
     if n gt 0 then // avoid an unnecessary computation
@@ -23,8 +25,10 @@ ModularExpPadic := procedure(f, n, ~I, ~M)
   while n gt 0 do
     if n mod p ne 0 then
       n_p := n mod p; m +:= i * n_p;
-      if M[i * n_p] eq -1 then ModularExpBinary(f, n_p, ~I, ~M); end if; f_np := M[i * n_p];
-      if M[m] eq -1 then M[m] := NormalForm(g * f_np, I); end if; g := M[m];
+      if M[m] eq -1 then
+        if M[i * n_p] eq -1 then ModularExpBinary(f, n_p, ~I, ~M); end if;
+        f_np := M[i * n_p]; M[m] := NormalForm(g * f_np, I);
+      end if; g := M[m];
     end if;
     n div:= p; i *:= p;
     if n gt 0 then // avoid an unnecessary computation
