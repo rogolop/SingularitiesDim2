@@ -1,8 +1,8 @@
 // Binary modular exponentiation of f^n mod I with memoization.
 ModularExpBinary := procedure(f, n, ~I, ~M)
-  g := Parent(f)!1; m := 0; i := 1;
+  R := Parent(f); g := R!1; m := 0; i := 1;
   if M[1] eq -1 then M[1] := NormalForm(f, I); end if; f := M[1];
-  while n gt 0 do
+  while n gt 0 and g ne R!0 do
     if n mod 2 ne 0 then
       n_2 := n mod 2; m +:= i * n_2;
       if M[m] eq -1 then
@@ -11,7 +11,7 @@ ModularExpBinary := procedure(f, n, ~I, ~M)
       end if; g := M[m];
     end if;
     n div:= 2; i *:= 2;
-    if n gt 0 then // avoid an unnecessary computation
+    if n gt 0 and g ne R!0 then
       if M[i] eq -1 then M[i] := NormalForm(f * f, I); end if; f := M[i];
     end if;
   end while;
@@ -22,7 +22,7 @@ end procedure;
 ModularExpPadic := procedure(f, n, ~I, ~M)
   R := Parent(f); p := Characteristic(R); g := R!1; m := 0; i := 1;
   if M[1] eq -1 then M[1] := NormalForm(f, I); end if; f := M[1];
-  while n gt 0 do
+  while n gt 0 and g ne R!0 do
     if n mod p ne 0 then
       n_p := n mod p; m +:= i * n_p;
       if M[m] eq -1 then
@@ -31,7 +31,7 @@ ModularExpPadic := procedure(f, n, ~I, ~M)
       end if; g := M[m];
     end if;
     n div:= p; i *:= p;
-    if n gt 0 then // avoid an unnecessary computation
+    if n gt 0 and g ne R!0 then
       if M[i] eq -1 then M[i] := NormalForm(f^p, I); end if; f := M[i];
     end if;
   end while;
