@@ -155,26 +155,3 @@ intrinsic IsPlaneCurveSemiGroup(G::[RngIntElt]) -> BoolElt
      not &and[N[i] * G[i] lt G[i + 1] : i in [1..#G - 1]] then return false;
   end if; return true;
 end intrinsic;
-
-forward SemiGroupCoordinatesImpl;
-
-SemiGroupCoordinatesImpl := procedure(v, i, ~G, ~V, ~N, ~X)
-  if v lt 0 or i gt #G then return; end if;
-  if v eq 0 then X cat:= [<V, &+[V[i] * N[i] : i in [1..#G]]>]; return; end if;
-  V[i] := V[i] + 1;
-  SemiGroupCoordinatesImpl(v - G[i], i, ~G, ~V, ~N, ~X);
-  V[i] := V[i] - 1;
-  SemiGroupCoordinatesImpl(v, i + 1, ~G, ~V, ~N, ~X);
-end procedure;
-
-intrinsic SemiGroupCoordinates(v::RngIntElt, G::[RngIntElt]) -> []
-{ Returns all the coordinates of a value v in the semigroup G and its
-  multiplicity at the origin }
-require Sort(G) eq G: "Generators of the semigroup must be sorted";
-  // Any semigroup is valid.
-  V := [0 : i in [1..#G]]; X := [];
-  N := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
-  N := [1] cat [G[1] div N[i] : i in [1..#N - 1]];
-  SemiGroupCoordinatesImpl(v, 1, ~G, ~V, ~N, ~X);
-  return X;
-end intrinsic;
