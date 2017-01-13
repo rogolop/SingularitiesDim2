@@ -7,6 +7,7 @@
   BasePoints.m
   IntegralClosure.m
   Filtration.m
+  MultiplierIdeals.m
   Misc.m
   PosChar.m
 }
