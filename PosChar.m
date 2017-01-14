@@ -8,18 +8,17 @@ ModularExpBinary := procedure(f, n, ~I, ~M)
       n_2 := n mod 2; m +:= i * n_2;
       if M[m] eq 1 then
         if M[i * n_2] eq 1 and g ne R!0 then
-        //if M[i * n_2] eq 1 then
           M[i * n_2] := NormalForm(f^n_2, I);
-        end if; M[i * n_2] := NormalForm(M[i * n_2], I); f_n2 := M[i * n_2];
+        end if;
+        f_n2 := M[i * n_2];
         M[m] := NormalForm(g * f_n2, I);
-      end if; M[m] := NormalForm(M[m], I); g := M[m];
+      end if; g := M[m];
     end if;
     n div:= 2; i *:= 2;
     if n gt 0 then
       if M[i] eq 1 and g ne R!0 then
-      //if M[i] eq 1 then
         M[i] := NormalForm(f * f, I);
-      end if; M[i] := NormalForm(M[i], I); f := M[i];
+      end if; f := M[i];
     end if;
   end while;
 end procedure;
@@ -28,25 +27,23 @@ end procedure;
 // to binary modular exponentiation and memoization.
 ModularExpPadic := procedure(f, n, ~I, ~M)
   R := Parent(f); g := R!1; m := 0; i := 1; p := Characteristic(R);
-  if M[1] eq 1 then M[1] := NormalForm(f, I); end if;
-  M[1] := NormalForm(M[1], I); f := M[1];
+  if M[1] eq 1 then M[1] := NormalForm(f, I); end if; f := M[1];
   while n gt 0 do
     if n mod p ne 0 then
       n_p := n mod p; m +:= i * n_p;
       if M[m] eq 1 then
         if M[i * n_p] eq 1 and g ne R!0 then
-        //if M[i * n_p] eq 1 then
           ModularExpBinary(f, n_p, ~I, ~M);
-        end if; M[i * n_p] := NormalForm(M[i * n_p], I); f_np := M[i * n_p];
+        end if;
+        f_np := M[i * n_p];
         M[m] := NormalForm(g * f_np, I);
-      end if; M[m] := NormalForm(M[m], I); g := M[m];
+      end if; g := M[m];
     end if;
     n div:= p; i *:= p;
     if n gt 0 then
-      //if M[i] eq 1 then
       if M[i] eq 1 and g ne R!0 then
         M[i] := NormalForm(f^p, I);
-      end if; M[i] := NormalForm(M[i], I); f := M[i];
+      end if; f := M[i];
     end if;
   end while;
 end procedure;
@@ -56,8 +53,7 @@ NuSearch := procedure(f, e, ~Ip, ~M, ~res)
   p := Characteristic(CoefficientRing(Ip));
   bottom := 0; top := p^e; mid := top div 2;
   while top - 1 gt bottom do
-    if M[mid] eq 1 then ModularExpPadic(f, mid, ~Ip, ~M);
-    else M[mid] := NormalForm(M[mid], Ip); end if;
+    if M[mid] eq 1 then ModularExpPadic(f, mid, ~Ip, ~M); end if;
     if M[mid] ne 0 then bottom := mid; else top := mid; end if;
     mid := (bottom + top) div 2;
   end while; res := mid;
@@ -89,7 +85,7 @@ intrinsic NuFiltration(f:: RngMPolLocElt, p::RngIntElt) -> RngIntElt
 
   for i in Reverse([1..#MI]) do
     JiP := ideal<R | StandardBasis([f^(p^e) : f in Basis(MI[i])])>;
-    //M := [R | NormalForm(fi, JiP) : fi in M]; // TODO
+    M := [R | NormalForm(fi, JiP) : fi in M];
     NuSearch(f, e, ~JiP, ~M, ~Nu[i]);
   end for;
   return Nu;
