@@ -38,3 +38,26 @@ require Rank(Parent(f)) eq 2: "First argument must be a bivariate polynomial";
   return J;
 end intrinsic;
 
+RSet := function(p, q)
+  return [a*p + b*q : a in [1..q], b in [1..p] | a*p + b*q lt p*q];
+end function;
+
+// Reference: D. Naie - Jumping numbers of a unibranch curve on a smooth surface
+intrinsic JumpingNumbers(G::[RngIntElt]) -> []
+{ Compute the Jumping Numbers < 1 of an irreducible plane curve from its semigroup }
+  require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+
+  g := #G - 1; JN := [];
+  for i in [1..g] do
+    p := E[i] / E[i + 1]; q := G[i + 1] / E[i + 1]; R := RSet(p, q); print R;
+    Rmj := [k*p*q + alpha : k in [0..E[i+1] - 1], alpha in R];
+    JN cat:= [[beta / Lcm(E[i], G[i + 1]) : beta in Rmj]];
+  end for; return JN;
+end intrinsic;
+
+// Reference: D. Naie - Jumping numbers of a unibranch curve on a smooth surface
+intrinsic JumpingNumbers(n::RngIntElt, M::[RngIntElt]) -> []
+{ Compute the Jumping Numbers < 1 of an irreducible plane curve from its char. exponents }
+  G := SemiGroup(n, M); return JumpingNumbers(G);
+end intrinsic;
