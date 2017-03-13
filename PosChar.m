@@ -61,7 +61,7 @@ end procedure;
 
 // General purpose functions to compute the Nu(e) value associated to
 // an element f in an ideal I.
-intrinsic Nu(f::RngMPolLocElt, I::RngMPolLoc, e::RngIntElt) -> RngIntElt
+intrinsic Nu(f::RngMPolElt, I::RngMPol, e::RngIntElt) -> RngIntElt
 { Computes the nu value of f with respect to the ideal I. }
   R := Parent(f); p := Characteristic(CoefficientRing(R));
   q := Characteristic(CoefficientRing(I));
@@ -71,4 +71,33 @@ require NormalForm(f, I) eq 0: "First argument must be contained in I";
 require Basis(I)[1] ne 1 and Gcd(Basis(I)) eq 1: "Second argument must be an m-primary ideal";
   Ip := ideal<R | [g^(p^e) : g in Basis(I)]>; res := 0;
   M := [R | 1 : i in [1..p^e]]; NuSearch(e, ~Ip, ~M, ~res); return res;
+end intrinsic;
+
+// Helper function for ethRoot
+ethRootImpl := function(I, e)
+  R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
+
+  if e le 0 then return ideal<R | [f^(p^-e) : f in Basis(I)]>; end if;
+  n := Rank(R); S := PolynomialRing(k, 2*n, "elim", [1..n], [n+1..2*n]);
+  F := hom<R -> S | [S.i : i in [1..n]]>;
+  J := ideal<S | [S.(i+n) - (S.i)^(p^e) : i in [1..n]]>;
+
+  G := [NormalForm(F(f), J) : f in Basis(I)];
+  H := &+[ideal<R | [Evaluate(m, <1 : i in [1..n]> cat <R.i : i in [1..n]>) :
+    m in Monomials(g)]> : g in G];
+  return ideal<R | GroebnerBasis(H)>;
+end function;
+
+// Computes the e-th root ideal of an polynomial element using Elimination &
+// modular exponentiation.
+intrinsic ethRoot(f::RngMPolElt, a::RngIntElt, e::RngIntElt) -> RngMPol
+{ Computes the ideal (f^a)^[1/p^e]. }
+  R := Parent(f); k := CoefficientRing(R); p := Characteristic(k);
+require p gt 0: "Computations only valid over finite fields";
+require p eq #k: "The field must be a prime field";
+  J := ideal<R | 1>; A := a div p^e; B := a mod p^e;
+  while B gt 0 do
+    J := ethRootImpl(ideal<R | f>^(B mod p) * J, 1);
+    B := B div p;
+  end while; return ideal<R | f>^A * J;
 end intrinsic;
