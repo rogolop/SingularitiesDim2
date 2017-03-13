@@ -155,3 +155,21 @@ intrinsic IsPlaneCurveSemiGroup(G::[RngIntElt]) -> BoolElt
      not &and[N[i] * G[i] lt G[i + 1] : i in [1..#G - 1]] then return false;
   end if; return true;
 end intrinsic;
+
+intrinsic Conductor(G::[RngIntElt]) -> RngIntElt
+{ Returns the conductor of the semigroup G }
+require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [E[i - 1] div E[i] : i in [2..#G]]; g := #G - 1; n := G[1];
+  return &+[(N[i] - 1) * G[i + 1] : i in [1..g]] - n + 1;
+end intrinsic;
+
+intrinsic Conductor(n::RngIntElt, M::[RngIntElt]) -> RngIntElt
+{ Returns the conductor of the char. exponents (n, M) }
+  return Conductor(SemiGroup(n, M));
+end intrinsic;
+
+intrinsic Conductor(f::RngMPolLocElt) -> RngIntElt
+{ Returns the conductor of the irreducible plane curve f }
+  return Conductor(SemiGroup(f));
+end intrinsic;

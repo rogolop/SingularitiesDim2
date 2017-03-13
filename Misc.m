@@ -126,3 +126,14 @@ intrinsic ASufficiencyBound(f::RngMPolLocElt) -> RngIntElt
   a := 2*Max(I); b := Ceiling(a);
   return a eq b select a + 1 else b;
 end intrinsic;
+
+intrinsic Trunk(F::[RngMPolLocElt]) -> RngSerPuisElt
+{ Compute the Puiseux expansion associated to a map F }
+require Rank(Universe(F)) eq 2: "Elements must be bivariate polynomials";
+  A<a> := LaurentSeriesRing(AlgebraicClosure(RationalField()));
+  P<t> := PuiseuxSeriesRing(A);
+  S := [P | Evaluate(f, <t, a*t>) : f in F];
+  Sort(~S, func<x, y | Valuation(x) - Valuation(y)>);
+  n := Valuation(S[1]); tt := Reverse(S[1]^(1/n));
+  return [P | t^n] cat [P | Evaluate(S[i], tt) : i in [2..#S]];
+end intrinsic;

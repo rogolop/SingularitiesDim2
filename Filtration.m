@@ -5,7 +5,7 @@ import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals
 
 FiltrationImpl := function(s, f, e, M)
   // Compute an upper bound for the necessary points.
-  KK := (e*Transpose(e))[1][1]; N := Ncols(e) + M - KK;
+  KK := (e*Transpose(e))[1][1]; N := Max(Ncols(e) + M - KK, Ncols(e));
   // Get the proximity matrix with all the necessary points.
   s := PuiseuxExpansionExpandReduced(s, f: Terms := M - KK - 1)[1];
   P := ProximityMatrixBranch(s, N); Pt := Transpose(P); Pt_inv := Pt^-1;
@@ -34,7 +34,7 @@ FiltrationImpl := function(s, f, e, M)
 
     // Fill the gaps in the filtration.
     KK_i := &+[e[i] * e_i[1][i] : i in [1..N]]; // Intersection [K, K_i]
-    H cat:= [H_i : i in [1..Min(KK_i, M) - m_i]]; m_i := KK_i;
+    H cat:= [H_i]; m_i := KK_i;
   end while; return H;
 end function;
 

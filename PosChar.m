@@ -72,22 +72,3 @@ require Basis(I)[1] ne 1 and Gcd(Basis(I)) eq 1: "Second argument must be an m-p
   Ip := ideal<R | [g^(p^e) : g in Basis(I)]>; res := 0;
   M := [R | 1 : i in [1..p^e]]; NuSearch(e, ~Ip, ~M, ~res); return res;
 end intrinsic;
-
-// Compute the sequence of Nu's for the filtration of complete ideals
-// associated to the irreducible plane curve f.
-//NuFiltration := function(f, p)
-intrinsic NuFiltration(f:: RngMPolLocElt, p::RngIntElt) -> RngIntElt
-{ }
-  if not IsPrime(p) then error "p must be prime"; end if;
-  R<x, y> := LocalPolynomialRing(FiniteField(p), 2); e := 1;
-  MI := [ConvertToIdeal(Ji, R) : Ji in MultiplierChain(f)];
-  f := R!f; M := [R | 1 : i in [1..p^e]]; Nu := [-1 : i in [1..#MI]];
-
-  for i in Reverse([1..#MI]) do
-    JiP := ideal<R | StandardBasis([f^(p^e) : f in Basis(MI[i])])>;
-    M := [R | NormalForm(fi, JiP) : fi in M];
-    NuSearch(f, e, ~JiP, ~M, ~Nu[i]);
-  end for;
-  return Nu;
-end intrinsic;
-//end function;

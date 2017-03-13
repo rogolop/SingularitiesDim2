@@ -2,16 +2,16 @@ import "ProximityMatrix.m": ProximityMatrixImpl;
 import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals,
                             ClusterFactorization, Curvettes;
 
-// TODO: Change irreducible curve by simple ideal?
-intrinsic MultiplierChain(f::RngMPolLocElt) -> []
+intrinsic MultiplierChain(I::RngMPolLoc) -> []
 { Returns the chain of multiplier ideals associated to an irreducible plane curve }
-require Rank(Parent(f)) eq 2: "First argument must be a bivariate polynomial";
+require Rank(I) eq 2: "First argument must be a plane ideal";
 
-  S := PuiseuxExpansion(f);
-  if #S gt 1 or S[1][2] gt 1 then error "the curve must be irreducible"; end if;
-  P, e, c := ProximityMatrixImpl([<S[1][1], 1>]);
-  Pt := Transpose(P); e := e[1]; c := c[1];
-  N := Ncols(P); KK := (e*Transpose(e))[1][1]; // Curve auto-intersection.
+  BP := BasePoints(I: Coefficients := true);
+  P := BP[1]; v := BP[2]; f := BP[3]; c := BP[4];
+  if f ne 1 then error "ideal must be m-primary"; end if;
+  Pt := Transpose(P); e := v*Pt; rho := e*P; N := Ncols(P);
+  if &+[rho[1][i] : i in [1..N]] ne 1 then error "ideal must be simple"; end if;
+  KK := (e*Transpose(e))[1][1]; // Divisor auto-intersection.
 
   // Compute the curvettes of the curve.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
@@ -50,7 +50,7 @@ intrinsic JumpingNumbers(G::[RngIntElt]) -> []
 
   g := #G - 1; JN := [];
   for i in [1..g] do
-    p := E[i] / E[i + 1]; q := G[i + 1] / E[i + 1]; R := RSet(p, q); print R;
+    p := E[i] / E[i + 1]; q := G[i + 1] / E[i + 1]; R := RSet(p, q);
     Rmj := [k*p*q + alpha : k in [0..E[i+1] - 1], alpha in R];
     JN cat:= [[beta / Lcm(E[i], G[i + 1]) : beta in Rmj]];
   end for; return JN;
