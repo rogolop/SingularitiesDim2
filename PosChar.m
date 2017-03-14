@@ -101,3 +101,15 @@ require p eq #k: "The field must be a prime field";
     B := B div p;
   end while; return ideal<R | f>^A * J;
 end intrinsic;
+
+//
+intrinsic ethRootChain(f::RngMPolElt) -> []
+{ Computes the chain of ethRoots of the powers of f. }
+  R := Parent(f); k := CoefficientRing(R); p := Characteristic(k);
+require p gt 0: "Computations only valid over finite fields";
+require p eq #k: "The field must be a prime field";
+  S := [<ethRoot(f, i, 1), i> : i in [1..p]]; C := [S[1]];
+  for i in [2..p] do
+    if S[i][1] ne C[#C][1] then Append(~C, S[i]); end if;
+  end for; return C;
+end intrinsic;

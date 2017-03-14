@@ -10,4 +10,5 @@
   MultiplierIdeals.m
   Misc.m
   PosChar.m
+  BlowUp.m
 }
