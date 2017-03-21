@@ -33,3 +33,10 @@ intrinsic NewtonPolygon(f::RngMPolLocElt) -> NwtnPgon
   P := Parent(f); Q := PolynomialRing(CoefficientRing(P), Rank(P));
   return NewtonPolygon(Q!f);
 end intrinsic;
+
+// JacobianMatrix not available for local polynomial rings.
+intrinsic JacobianMatrix(poly_list::[RngMPolLocElt]) -> SeqEnum
+{ Compute the pencil associated to the trunk ofthe morphism F. }
+  P := Parent(poly_list[1]); Q := PolynomialRing(CoefficientRing(P), Rank(P));
+  return ChangeRing(JacobianMatrix([Q | f : f in poly_list]), P);
+end intrinsic;
