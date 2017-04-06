@@ -2,7 +2,8 @@ import "ProximityMatrix.m": ProximityMatrixImpl;
 import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals,
                             ClusterFactorization, Curvettes;
 
-intrinsic MultiplierChain(I::RngMPolLoc) -> []
+// Ignore this function for the moment
+intrinsic PseudoMultiplierChain(I::RngMPolLoc) -> []
 { Returns the chain of multiplier ideals associated to an irreducible plane curve }
 require Rank(I) eq 2: "First argument must be a plane ideal";
 

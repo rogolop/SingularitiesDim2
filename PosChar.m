@@ -73,7 +73,7 @@ require Basis(I)[1] ne 1 and Gcd(Basis(I)) eq 1: "Second argument must be an m-p
   M := [R | 1 : i in [1..p^e]]; NuSearch(e, ~Ip, ~M, ~res); return res;
 end intrinsic;
 
-// Helper function for ethRoot
+// Helper function for ethRoot where the actual computation happens.
 ethRootImpl := function(I, e)
   R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
 
@@ -82,33 +82,37 @@ ethRootImpl := function(I, e)
   F := hom<R -> S | [S.i : i in [1..n]]>;
   J := ideal<S | [S.(i+n) - (S.i)^(p^e) : i in [1..n]]>;
 
+  // The bulk of the computation.
   G := [NormalForm(F(f), J) : f in Basis(I)];
-  H := &+[ideal<R | [Evaluate(m, <1 : i in [1..n]> cat <R.i : i in [1..n]>) :
-    m in Monomials(g)]> : g in G];
+
+  // Extract the the 'polynomial' coefficients.
+  Q := PolynomialRing(R, n);
+  FF := hom<S -> Q | [Q.i : i in [1..n]] cat [R.i : i in [1..n]]>;
+  H := &+[ideal<R | Coefficients(FF(g))> : g in G];
   return ideal<R | GroebnerBasis(H)>;
 end function;
 
 // Computes the e-th root ideal of an polynomial element using Elimination &
 // modular exponentiation.
-intrinsic ethRoot(f::RngMPolElt, a::RngIntElt, e::RngIntElt) -> RngMPol
+intrinsic ethRoot(I::RngMPol, a::RngIntElt, e::RngIntElt) -> RngMPol
 { Computes the ideal (f^a)^[1/p^e]. }
-  R := Parent(f); k := CoefficientRing(R); p := Characteristic(k);
+  R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
 require p gt 0: "Computations only valid over finite fields";
 require p eq #k: "The field must be a prime field";
   J := ideal<R | 1>; A := a div p^e; B := a mod p^e;
   while B gt 0 do
-    J := ethRootImpl(ideal<R | f>^(B mod p) * J, 1);
+    J := ethRootImpl(I^(B mod p) * J, 1);
     B := B div p;
-  end while; return ideal<R | f>^A * J;
+  end while; return I^A * J;
 end intrinsic;
 
 //
-intrinsic ethRootChain(f::RngMPolElt) -> []
+intrinsic ethRootChain(I::RngMPol) -> []
 { Computes the chain of ethRoots of the powers of f. }
-  R := Parent(f); k := CoefficientRing(R); p := Characteristic(k);
+  R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
 require p gt 0: "Computations only valid over finite fields";
 require p eq #k: "The field must be a prime field";
-  S := [<Basis(ethRoot(f, i, 1)), i> : i in [1..p]]; C := [S[1]];
+  S := [<Basis(ethRoot(I, i, 1)), i> : i in [1..p]]; C := [S[1]];
   for i in [2..p] do
     if S[i][1] ne C[#C][1] then Append(~C, S[i]); end if;
   end for; return C;
