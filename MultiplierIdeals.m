@@ -53,7 +53,7 @@ intrinsic JumpingNumbers(G::[RngIntElt]) -> []
   for i in [1..g] do
     p := E[i] / E[i + 1]; q := G[i + 1] / E[i + 1]; R := RSet(p, q);
     Rmj := [k*p*q + alpha : k in [0..E[i+1] - 1], alpha in R];
-    JN cat:= [[beta / Lcm(E[i], G[i + 1]) : beta in Rmj]];
+    JN cat:= [[beta / Lcm(E[i], G[i + 1]) : beta in Sort(Rmj)]];
   end for; return JN;
 end intrinsic;
 
