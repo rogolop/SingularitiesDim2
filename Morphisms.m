@@ -20,7 +20,7 @@ end intrinsic;
 intrinsic TangentCone(f::RngMPolLocElt) -> RngMPolLocElt
 { Computes the tangent cone at the origin of an hypersuface }
   n := Multiplicity(f);
-  return &+[m : m in Terms(f) | &+Exponents(m) eq n];
+  return &+[m : m in Terms(f) | TotalDegree(m) eq n];
 end intrinsic;
 
 intrinsic Trunk(F::[RngMPolLocElt]) -> []

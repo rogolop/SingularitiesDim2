@@ -44,4 +44,3 @@ intrinsic Polynomial(C::SeqEnum[RngElt], M::SeqEnum[RngMPolLocElt]) -> RngMPolLo
   P := Parent(M[1]); Q := PolynomialRing(CoefficientRing(P), Rank(P));
   return P!Polynomial(C, ChangeUniverse(M, Q));
 end intrinsic;
-

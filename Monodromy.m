@@ -6,7 +6,7 @@ JacobianMembership := function(f)
   J := IdealWithFixedBasis(Basis(JacobianIdeal(f)));
   Xi := Coordinates(J, f^kappa);
 
-  return kappa;
+  return kappa, Xi;
 end function;
 
 // Computes the inverse of a unit in a local polynomial ring. It uses the
@@ -18,7 +18,7 @@ Inverse := function(u, n)
 
   u0 := LeadingTerm(u); v := 1/u0;
   for i in [1..n] do
-    v -:= &+[(Part(v, k) * Part(u, i - k))/u0 : k in [0..i-1]];
+    v -:= &+[(Part(v, k)*Part(u, i - k))/u0 : k in [0..i-1]];
   end for; return v;
 end function;
 
@@ -28,15 +28,15 @@ BasisKJetsH2 := function(f, K, mu)
   n := Multiplicity(f); N := n; codimD := 0;
 
   while codimD lt K*mu do
-    // Compute { f^K z^a, |a| < N - K * n } a CC basis of f^k Omega^n
-    //B1 := apply(monomialBasis(N - K * n, R), m -> f^K * m);
+    // Compute { f^K z^a, |a| < N - K*n } a CC basis of f^k Omega^n
+    //B1 := apply(monomialBasis(N - K*n, R), m -> f^K*m);
     RM1 := R/M^Max([0, N - K*n]); F1 := hom<RM1 -> R | [R.i : i in [1..g]]>;
-    B := [f^K * m : m in F1(MonomialBasis(RM1))];
-    // Compute {a_i * z^a / z_i * f_j - a_j * z^a / z_j * f_i, |a| < N - n + 2}
+    B := [f^K*m : m in F1(MonomialBasis(RM1))];
+    // Compute {a_i*z^a / z_i*f_j - a_j*z^a / z_j*f_i, |a| < N - n + 2}
     // a CC basis of df \wedge d(Omega^{n-2})
     RM2 := R/M^Max([0, N - n + 2]); F2 := hom<RM2 -> R | [R.i : i in [1..g]]>;
-    B cat:= [Derivative(m, i) * Derivative(f, j) -
-             Derivative(m, j) * Derivative(f, i)
+    B cat:= [Derivative(m, i)*Derivative(f, j) -
+             Derivative(m, j)*Derivative(f, i)
              : m in F2(MonomialBasis(RM2)), i in [1..g], j in [1..g] | i lt j];
     // Compute the N-jets of B as a vector space over CC.
     RM := R/M^N; V, G := VectorSpace(RM); // F *might* be superflous after bug fix OR ChangeUniverse(~B, RM). <---------- TODO
@@ -47,32 +47,29 @@ end function;
 
 // Given a C{f}-basis of H2, computes its image via (t^kappa nabla) modulo N,
 // since the image are arbitrary series.
-NablaN := function(f, kappa, Xi, u, H2, N)
-  uinv := Inverse(u, N); kfk := kappa * f^(kappa - 1); g := Rank(Parent(f));
-  return [&+[Derivative(uinv * Xi[i] * e, i) : i in [1..g]] - kfk*e : e in H2];
+NablaN := function(f, kappa, Xi, u, H2, N);
+  uinv := Inverse(u, N); kfk := kappa*f^(kappa - 1); g := Rank(Parent(f));
+  return [&+[Derivative(uinv*Xi[i]*e, i) : i in [1..g]] - kfk*e : e in H2];
 end function;
 
 // Returns the K-jets (mod t^k) of the de residue matrix on the Gauss-Manin
 // connection on the lattice H2.
-ConnectionMatrixK := function(f, kappa, Xi, u, K, H2, mu)
-  N, _, WG, G := BasisKJetsH2(f, K, mu); // K
+ConnectionMatrix := function(f, kappa, Xi, u, K, H2, S)
+  mu := #H2; N, _, WG, G := BasisKJetsH2(f, K, mu); // K
   nablaH2 := NablaN(f, kappa, Xi, u, H2, N); // N
-  kJetsH2 := [f^i*e : i in [0..K - 1], e in H2]; // K
+  kJetsH2 := [f^i*e : e in H2, i in [0..K - 1]]; // K
 
   R := Parent(f); g := Rank(R); M := ideal<R | [R.i : i in [1..g]]>; // ????
   RM := R/M^N; F := hom<R -> RM | [RM.i : i in [1..g]]>; // F *might* be superflous after bug fix OR ChangeUniverse(~B, RM). <---------- TODO
 
   VW := Matrix((F*G)(kJetsH2) cat WG); E, T := EchelonForm(Transpose(VW));
-  VnablaH2 := Matrix((F*G)(nablaH2)); C := VnablaH2 * Transpose(T);
+  VnablaH2 := Matrix((F*G)(nablaH2)); C := VnablaH2*Transpose(T);
 
-  return 0;
+  M := ZeroMatrix(S, mu, mu); t := S.1;
+  for k in [0..K - 1] do
+    M +:= ChangeRing(Submatrix(C, 1, k*mu + 1, mu, mu), S)*t^k;
+  end for; return M;
 end function;
-//  for k in 0..K - 1 do (
-//    for i in 0..mu - 1 do (
-//      for j in 0..mu - 1 do (
-//        M_(i,j) = M_(i,j) + C_(i + k * mu, j) * t^k;
-//    ););
-//  ); return matrix(M);
 
 intrinsic Monodromy(f::RngMPolLocElt) -> []
 { Computes the matrix of the monodromy action in the cohomology of the
@@ -85,10 +82,10 @@ intrinsic Monodromy(f::RngMPolLocElt) -> []
   //---------------------------------------------------------------------------
 
   R := Parent(f); g := Rank(R); x := R.1; y := R.2;
-  kappa := JacobianMembership(f);
+  kappa, _ := JacobianMembership(f);
   Xi := [-(2/3)*x*y^6+(1/6)*x^7+(9/2)*x^3*y^8-(3/2)*x^9*y^2,
          (1/2)*x^2*y^3+(1/6)*y^7+(5/6)*x^6*y-4*x^4*y^5-(3/2)*x^2*y^9-(15/2)*x^8*y^3];
-  u := ExactQuotient(Derivative(f, 1) * Xi[1] + Derivative(f, 2) * Xi[2], f^kappa);
+  u := ExactQuotient(Derivative(f, 1)*Xi[1] + Derivative(f, 2)*Xi[2], f^kappa);
 
   //---------------------------------------------------------------------------
   //--------------- STEP 2: Compute a C{f}-basis of H2 ------------------------
@@ -107,17 +104,36 @@ intrinsic Monodromy(f::RngMPolLocElt) -> []
   //--------------- STEP 3: Compute the saturated lattice ---------------------
   //---------------------------------------------------------------------------
 
-  S<t> := LocalPolynomialRing(Rationals(), 1);
-  ConnectionMatrixK(f, kappa, Xi, u, 1, H2, mu);
-  //S := QQ{t, MonomialOrder => RevLex}; U := t^((kappa - 1)*(mu - 1))*S^mu; prevU := 0*(S^mu); i := 2;
-  //while (U != prevU) do (
-  //  M = MK(f, kappa, Xi, u, (kappa - 1)*i, H2, S); prevU = U;
-  //  U = U + image(t*diff(t, gens(U))) + image((M * gens(U))//t^(kappa - 1));
-  //  U = image(mingens(U)); i = i + 1;
-  //); U = image(mingens(gb(U)));
-  //assert(numcols(gens(U)) == numrows(gens(U)));
-  //polU = min(apply(flatten(entries(gens(U))), multiplicity));
-  //U = gens(U) * t^-polU;
+  S<t> := LocalPolynomialRing(Rationals(), 1); E := EModule(S, mu);
+  Diff := hom<S -> S | x :-> Derivative(x, 1)>;
+  Div := func<k | hom<S -> S | x :-> ExactQuotient(x, t^k)>>;
+  // Iterate lattice until it stabilizes.
+  U := t^((kappa - 1)*(mu - 1))*ScalarMatrix(mu, S!1); i := 1;
+  repeat
+    M := ConnectionMatrix(f, kappa, Xi, u, (kappa - 1)*i, H2, S);
+    prevU := sub<E | RowSequence(U)>; i +:= 1;
+    // U_i = U_{i-1} + td/dtU_{i-1} + M/t^(kappa-1)*U_{i-1}.
+    U := VerticalJoin([U, t*ChangeRing(U, Diff), ChangeRing(U, Div(kappa - 1))*M]);
+    U := Matrix(MinimalBasis(sub<E | Reverse(RowSequence(U))>));
+  until sub<E | RowSequence(U)> eq prevU;
+  ordU := Min([LeadingTotalDegree(e) : e in Eltseq(U) | e ne 0]);
+  U := ChangeRing(U, Div(ordU));
 
-  return 0;
+  //---------------------------------------------------------------------------
+  //--------------- STEP 4: Base change to the saturated lattice --------------
+  //---------------------------------------------------------------------------
+
+  // Compute the determinant of U s.t. det U = t^ordDetU * uDet.
+  detU := Determinant(U); ordDetU := LeadingTotalDegree(detU);
+  detU := ExactQuotient(detU, t^ordDetU);
+  // Compute the adjoint matrix of U s.t. adj U = t^ordAdjU * adjU
+  adjU := Adjoint(U);
+  ordAdjU := Min([LeadingTotalDegree(e) : e in Eltseq(adjU) | e ne 0]);
+  adjU := ChangeRing(adjU, Div(ordAdjU));
+  // Get series with enough precision for the computation.
+  alpha := kappa + ordDetU - ordAdjU; invUDet := Inverse(detU, alpha);
+  M := ConnectionMatrix(f, kappa, Xi, u, alpha, H2, S);
+  // Apply base change formula.
+  M := ChangeRing(invUDet*(t^kappa * ChangeRing(U, Diff) + U*M)*adjU, Div(alpha - 1));
+  return Matrix(Rationals(), mu, mu, [Evaluate(e, <0>) : e in Eltseq(M)]);
 end intrinsic;
