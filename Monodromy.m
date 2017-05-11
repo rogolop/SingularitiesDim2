@@ -1,4 +1,4 @@
-
+// Find kappa s.t f^kappa \in J(f) and find its coordinates.
 JacobianMembership := function(f)
   Jstd := JacobianIdeal(f); kappa := 1; n := Rank(Parent(f));
   while NormalForm(f^kappa, Jstd) ne 0 do kappa +:= 1; end while;
@@ -22,7 +22,8 @@ Inverse := function(u, n)
   end for; return v;
 end function;
 
-//
+// Returns a C-basis of I = df \wedge dOmega^{n-1} mod m^N, with N >> 0
+// such that m^NOmega^n \subseq I.
 BasisKJetsH2 := function(f, K, mu)
   R := Parent(f); g := Rank(R); M := ideal<R | [R.i : i in [1..g]]>;
   n := Multiplicity(f); N := n; codimD := 0;
@@ -55,7 +56,9 @@ end function;
 // Returns the K-jets (mod t^k) of the de residue matrix on the Gauss-Manin
 // connection on the lattice H2.
 ConnectionMatrix := function(f, kappa, Xi, u, K, H2, S)
-  mu := #H2; N, _, WG, G := BasisKJetsH2(f, K, mu); // K
+  mu := #H2; if K eq 0 then return ScalarMatrix(mu, S!1); end if;
+
+  N, _, WG, G := BasisKJetsH2(f, K, mu); // K
   nablaH2 := NablaN(f, kappa, Xi, u, H2, N); // N
   kJetsH2 := [f^i*e : e in H2, i in [0..K - 1]]; // K
 
@@ -71,9 +74,45 @@ ConnectionMatrix := function(f, kappa, Xi, u, K, H2, S)
   end for; return M;
 end function;
 
+ParseMonomial := function(mon, R)
+  Str2Int := StringToInteger; firstVar := Rank(R); idx := #mon + 1;
+  for i in [1..Rank(R)] do
+    tmpIdx := Position(mon, Sprint(R.i));
+    if tmpIdx ne 0 then idx := tmpIdx; firstVar := i; break; end if;
+  end for; coeff := mon[1..idx - 1];
+  p := (idx gt 1) select R!StringToRational(coeff) else R!1;
+  lastVar := firstVar;
+  for j in [firstVar + 1..Rank(R)] do
+    nextIdx := Position(mon, Sprint(R.j));
+    if idx ne nextIdx and nextIdx ne 0 then
+      if nextIdx - idx eq #Sprint(R.(j - 1)) then exp := 1; else
+      exp := Str2Int(mon[idx + #Sprint(R.(j - 1))..nextIdx - 1]); end if;
+      p *:= R.(j - 1)^exp; idx := nextIdx; lastVar := j;
+    end if;
+  end for;
+  if idx ne #mon + 1 then
+    if #mon + 1 - idx eq #Sprint(R.lastVar) then exp := 1; else
+    exp := Str2Int(mon[idx + #Sprint(R.lastVar)..#mon]); end if;
+    p *:= R.lastVar^exp;
+  end if; return p;
+end function;
+
+ParsePolynomial := function(S, R)
+  lastIdx := 1; p := R!0; S := StripWhiteSpace(S);
+  if S[1] ne "-" then S := "+" cat S; end if;
+  for idx in [2..#S] do
+    if S[idx] eq "-" or S[idx] eq "+" then
+      m := ParseMonomial(S[lastIdx + 1..idx - 1], R);
+      if S[lastIdx] eq "-" then m *:= -1; end if; p +:= m; lastIdx := idx;
+    end if;
+  end for; m := ParseMonomial(S[lastIdx + 1..#S], R);
+  if S[lastIdx] eq "-" then m *:= -1; end if; p +:= m; return p;
+end function;
+
 intrinsic Monodromy(f::RngMPolLocElt) -> []
 { Computes the matrix of the monodromy action in the cohomology of the
   Milnor fiber using an algorithm by Brieskorn }
+
   mu := MilnorNumber(f);
   require mu ne Infinity(): "Argument must be an isolated singularity.";
 
@@ -83,8 +122,16 @@ intrinsic Monodromy(f::RngMPolLocElt) -> []
 
   R := Parent(f); g := Rank(R); x := R.1; y := R.2;
   kappa, _ := JacobianMembership(f);
-  Xi := [-(2/3)*x*y^6+(1/6)*x^7+(9/2)*x^3*y^8-(3/2)*x^9*y^2,
-         (1/2)*x^2*y^3+(1/6)*y^7+(5/6)*x^6*y-4*x^4*y^5-(3/2)*x^2*y^9-(15/2)*x^8*y^3];
+
+  // HACK
+  SingOpts := "Singular -q --echo=0 --execute=";
+  SingPrg := "\"ring R=0,(" cat
+    &cat[(i eq 1 select "" else ",") cat Sprint(R.i) : i in [1..g]]
+    cat "),ds; " cat "poly f=" cat Sprint(f) cat "; print(lift(jacob(f), f^"
+    cat Sprint(kappa) cat ")[1]); quit;\"";
+  SingOut := Pipe(SingOpts cat SingPrg, "");
+  Xi := Split(Substring(SingOut, 2, #SingOut - 3), ",");
+  Xi := [ParsePolynomial(fi, R) : fi in Xi];
   u := ExactQuotient(Derivative(f, 1)*Xi[1] + Derivative(f, 2)*Xi[2], f^kappa);
 
   //---------------------------------------------------------------------------
@@ -108,7 +155,7 @@ intrinsic Monodromy(f::RngMPolLocElt) -> []
   Diff := hom<S -> S | x :-> Derivative(x, 1)>;
   Div := func<k | hom<S -> S | x :-> ExactQuotient(x, t^k)>>;
   // Iterate lattice until it stabilizes.
-  U := t^((kappa - 1)*(mu - 1))*ScalarMatrix(mu, S!1); i := 1;
+  U := t^((kappa - 1)*(mu - 1) + 1)*ScalarMatrix(mu, S!1); i := 1;
   repeat
     M := ConnectionMatrix(f, kappa, Xi, u, (kappa - 1)*i, H2, S);
     prevU := sub<E | RowSequence(U)>; i +:= 1;
@@ -116,8 +163,7 @@ intrinsic Monodromy(f::RngMPolLocElt) -> []
     U := VerticalJoin([U, t*ChangeRing(U, Diff), ChangeRing(U, Div(kappa - 1))*M]);
     U := Matrix(MinimalBasis(sub<E | Reverse(RowSequence(U))>));
   until sub<E | RowSequence(U)> eq prevU;
-  ordU := Min([LeadingTotalDegree(e) : e in Eltseq(U) | e ne 0]);
-  U := ChangeRing(U, Div(ordU));
+  U := ChangeRing(U, Div((kappa - 1)*(mu - 1)));
 
   //---------------------------------------------------------------------------
   //--------------- STEP 4: Base change to the saturated lattice --------------
@@ -135,5 +181,7 @@ intrinsic Monodromy(f::RngMPolLocElt) -> []
   M := ConnectionMatrix(f, kappa, Xi, u, alpha, H2, S);
   // Apply base change formula.
   M := ChangeRing(invUDet*(t^kappa * ChangeRing(U, Diff) + U*M)*adjU, Div(alpha - 1));
-  return Matrix(Rationals(), mu, mu, [Evaluate(e, <0>) : e in Eltseq(M)]);
+
+  Jet0M := Matrix(Rationals(), mu, mu, [Evaluate(e, <0>) : e in Eltseq(M)]);
+  return Jet0M;
 end intrinsic;
