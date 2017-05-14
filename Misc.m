@@ -71,7 +71,6 @@ end intrinsic;
 
 intrinsic ESufficiencyDegree(f::RngMPolLocElt) -> RngIntElt
 { Computes the E-sufficiency degree of a plane curve }
-require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
 require Evaluate(f, <0, 0>) eq 0: "Curve must be non-empty";
   branches := PuiseuxExpansion(f); P, E, _ := ProximityMatrixImpl(branches);
   ZZ := IntegerRing(); VS := RSpace(ZZ, Ncols(P));
@@ -100,7 +99,6 @@ end intrinsic
 
 intrinsic PolarInvariants(f::RngMPolLocElt) -> []
 { Computes the polar invariants of a plane curve }
-require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
 require Evaluate(f, <0, 0>) eq 0: "Curve must be non-empty";
   branches := PuiseuxExpansion(f); P, E, _ := ProximityMatrixImpl(branches);
   ZZ := IntegerRing(); VS := RSpace(ZZ, Ncols(P));

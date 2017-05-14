@@ -29,14 +29,6 @@ intrinsic JacobianIdeal(p::RngMPolLocElt) -> RngMPolLoc
   return ideal<R | [Derivative(p, i) : i in [1..n]]>;
 end intrinsic;
 
-// MilnorNumber not available for local polynomial rings.
-intrinsic MilnorNumber(f::RngMPolLocElt) -> RngIntElt
-{ The Milnor number of f }
-  R := Parent(f); J := JacobianIdeal(f); RJ := R/J;
-  if HasFiniteDimension(RJ) then return Dimension(RJ);
-  else return Infinity(); end if;
-end intrinsic;
-
 // Polynomial not available for local polynomial rings.
 intrinsic Polynomial(C::SeqEnum[RngElt], M::SeqEnum[RngMPolLocElt]) -> RngMPolLocElt
 { The multivariate polynomial whose coefficients are C and monomials are M

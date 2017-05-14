@@ -229,7 +229,6 @@ end function;
 intrinsic ProximityMatrix(f::RngMPolLocElt: ExtraPoint := false,
                           Coefficients := false) -> []
 { Computes de proximity matrix of the resolution of a plane curve }
-require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   // Get the general Puiseux expansion of f.
   branches := PuiseuxExpansion(f);
   P, E, C := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint);
@@ -238,5 +237,5 @@ require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
   for i in [1..#E] do
     I := [j : j in [1..Ncols(P)] | E[i][1][j] ne 0];
     for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
-  end for; return <P, &+E, CC>;
+  end for; return P, &+E, CC;
 end intrinsic;

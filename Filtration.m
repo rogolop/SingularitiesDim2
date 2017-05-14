@@ -1,6 +1,9 @@
-import "ProximityMatrix.m": ProximityMatrixImpl, ProximityMatrixBranch,
-                            MultiplicityVectorBranch, CoefficientsVectorBranch;
-import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals,
+import "ProximityMatrix.m": ProximityMatrixImpl,
+                            ProximityMatrixBranch,
+                            MultiplicityVectorBranch,
+                            CoefficientsVectorBranch;
+import "IntegralClosure.m": IntegralClosureIrreducible,
+                            Unloading, ProductIdeals,
                             ClusterFactorization, Curvettes;
 
 FiltrationImpl := function(s, f, e, M)
@@ -38,20 +41,21 @@ FiltrationImpl := function(s, f, e, M)
   end while; return H;
 end function;
 
-intrinsic Filtration(f::RngMPolLocElt, n::RngIntElt) -> []
+// Helper funcition
+ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
+
+intrinsic Filtration(f::RngMPolLocElt, n::RngIntElt : Ideal := true) -> []
 { Returns a filtration by complete ideals of an irreducible
-  plane curve up to multiplicity n }
-require Rank(Parent(f)) eq 2: "First argument must be a bivariate polynomial";
+  plane curve up to autointersection n }
 require n ge 0: "Second argument must be a non-negative integer";
 
-  S := PuiseuxExpansion(f: Polynomial := true);
+  Q := Parent(f); S := PuiseuxExpansion(f: Polynomial := true);
   if #S gt 1 or S[1][2] gt 1 then error "the curve must be irreducible"; end if;
   s := S[1][1]; f := S[1][3]; _, e, _ := ProximityMatrixImpl([<s, 1>]);
   KK := e[1]*Transpose(e[1]); // Curve auto-intersection.
 
-  return FiltrationImpl(s, f, e[1], n eq 0 select KK[1][1] else n);
+  F := FiltrationImpl(s, f, e[1], n eq 0 select KK[1][1] else n);
+  ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
+  if Ideal eq true then return [ConvertToIdeal(I, Q) : I in F];
+  else return F; end if;
 end intrinsic;
-
-function ConvertToIdeal(I, Q)
-  return ideal<Q | [&*[f_i[1]^f_i[2] : f_i in f] : f in I]>;
-end function;

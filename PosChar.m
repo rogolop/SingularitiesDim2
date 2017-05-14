@@ -68,7 +68,9 @@ intrinsic Nu(f::RngMPolElt, I::RngMPol, e::RngIntElt) -> RngIntElt
 require p gt 0 and q gt 0: "Computations only valid over finite fields";
 require p eq q: "Arguments defined over different finite fields";
 require NormalForm(f, I) eq 0: "First argument must be contained in I";
-require Basis(I)[1] ne 1 and Gcd(Basis(I)) eq 1: "Second argument must be an m-primary ideal";
+require Basis(I)[1] ne 1 and Gcd(Basis(I)) eq 1:
+  "Second argument must be an m-primary ideal";
+
   Ip := ideal<R | [g^(p^e) : g in Basis(I)]>; res := 0;
   M := [R | 1 : i in [1..p^e]]; NuSearch(e, ~Ip, ~M, ~res); return res;
 end intrinsic;
@@ -99,6 +101,7 @@ intrinsic ethRoot(I::RngMPol, a::RngIntElt, e::RngIntElt) -> RngMPol
   R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
 require p gt 0: "Computations only valid over finite fields";
 require p eq #k: "The field must be a prime field";
+
   J := ideal<R | 1>; A := a div p^e; B := a mod p^e;
   while B gt 0 do
     J := ethRootImpl(I^(B mod p) * J, 1);
@@ -107,12 +110,13 @@ require p eq #k: "The field must be a prime field";
 end intrinsic;
 
 //
-intrinsic ethRootChain(I::RngMPol) -> []
+intrinsic ethRootChain(I::RngMPol, e::RngIntElt) -> []
 { Computes the chain of ethRoots of the powers of f. }
   R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
 require p gt 0: "Computations only valid over finite fields";
 require p eq #k: "The field must be a prime field";
-  S := [<Basis(ethRoot(I, i, 1)), i> : i in [1..p]]; C := [S[1]];
+
+  S := [<Basis(ethRoot(I, i, e)), i> : i in [1..p^e]]; C := [S[1]];
   for i in [2..p] do
     if S[i][1] ne C[#C][1] then Append(~C, S[i]); end if;
   end for; return C;

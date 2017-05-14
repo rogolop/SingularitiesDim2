@@ -44,16 +44,12 @@ end procedure;
 intrinsic BasePoints(I::RngMPolLoc : Coefficients := false) -> []
 { Computes the weighted cluster of base points of a bivariate
   polynomial ideal I }
-require Type(Representative(I)) eq RngMPolLocElt:
-  "Argument must be a polynomial ideal";
-require Rank(Parent(Representative(I))) eq 2:
-  "Argument must be a bivariate polynomial ideal";
   // Generators in G & fixed part F.
   G := Basis(I); F := Gcd(G); G := [ExactQuotient(g, F) : g in G];
 
   ////////////// Compute all information ////////////////
   S := PuiseuxExpansion(G: Polynomial := true);
-  P, EE, CC := ProximityMatrixImpl([* <s[1], 1> : s in S *]: ExtraPoint := true);
+  P, EE, CC := ProximityMatrixImpl([*<s[1], 1> : s in S*]: ExtraPoint := true);
 
   E := []; // Multiplicities of each generator.
   C := []; // Coefficients of BP(I).

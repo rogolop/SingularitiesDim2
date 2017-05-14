@@ -1,15 +1,16 @@
 {
+  BasePoints.m
+  Filtration.m
+  IntegralClosure.m
+  Jacobian.m
   LocalPolynomialRing.m
+  Misc.m
+  Monodromy.m
+  Morphisms.m
+  MultiplierIdeals.m
   NewtonPolygon.m
+  PosChar.m
+  ProximityMatrix.m
   PuiseuxExpansion.m
   SemiGroup.m
-  ProximityMatrix.m
-  BasePoints.m
-  IntegralClosure.m
-  Filtration.m
-  MultiplierIdeals.m
-  Misc.m
-  PosChar.m
-  Morphisms.m
-  Monodromy.m
 }

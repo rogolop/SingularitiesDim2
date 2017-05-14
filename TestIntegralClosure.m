@@ -9,9 +9,7 @@ function JacobianIdeal(f)
   return ideal<Q | f, Derivative(f, 1), Derivative(f, 2)>;
 end function;
 
-function ConvertToIdeal(I, Q)
-  return ideal<Q | [&*[f_i[1]^f_i[2] : f_i in f] : f in I]>;
-end function;
+ConvertToIdeal := func<I, Q | ideal<Q | [&*[g[1]^g[2] : g in f] : f in I]>>;
 
 // Whole ring
 I := ideal<Q | y*(1 + x), y*y>;

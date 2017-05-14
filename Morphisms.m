@@ -1,6 +1,6 @@
 intrinsic PuiseuxTrunk(F::[RngMPolLocElt]) -> []
 { Compute the Puiseux expansion associated to a map F }
-require Rank(Universe(F)) eq 2: "Elements must be bivariate polynomials";
+require Rank(Universe(F)) eq 2: "Argument must be bivariate polynomials";
   A<a> := LaurentSeriesRing(AlgebraicClosure(RationalField()));
   P<t> := PuiseuxSeriesRing(A);
   S := [P | Evaluate(f, <t, a*t>) : f in F];
@@ -25,7 +25,7 @@ end intrinsic;
 
 intrinsic Trunk(F::[RngMPolLocElt]) -> []
 { Compute the pencil associated to the trunk of the morphism F }
-require Rank(Universe(F)) eq 2: "Elements must be bivariate polynomials";
+require Rank(Universe(F)) eq 2: "Argument must be bivariate polynomials";
 require #F eq 2: "Morphism must be defined by two elements";
   R := Parent(F[1]); S<u, v> := LocalPolynomialRing(RationalField(), 2);
   Sort(~F, func<x, y | Multiplicity(x) - Multiplicity(y)>);
@@ -48,7 +48,7 @@ end intrinsic;
 
 intrinsic TangentMap(F::[RngMPolLocElt]) -> []
 { The tangent map of a planar morphism }
-require Rank(Universe(F)) eq 2: "Elements must be bivariate polynomials";
+require Rank(Universe(F)) eq 2: "Argument must be bivariate polynomials";
 require #F eq 2: "Morphism must be defined by two elements";
   R := Parent(F[1]); S<u, v> := LocalPolynomialRing(RationalField(), 2);
   Sort(~F, func<x, y | Multiplicity(x) - Multiplicity(y)>);

@@ -1,7 +1,8 @@
 import "SemiGroup.m": Euclides, TailExponentMatrix, InversionFormula;
 
 // Given a Puiseux series s, returns its associated Weierstrass equation.
-intrinsic WeierstrassEquationCyclotomic(s::RngSerPuisElt, Q::RngMPolLoc) -> RngMPolLocElt
+intrinsic WeierstrassEquationCyclotomic(s::RngSerPuisElt, Q::RngMPolLoc) ->
+  RngMPolLocElt
 { Computes the Weierstrass equation associated to a Puiseux series }
 require Type(CoefficientRing(Parent(s))) eq FldAC:
   "Argument's coefficient ring must be an algebraically closed field";
@@ -15,7 +16,8 @@ require Type(CoefficientRing(Parent(s))) eq FldAC:
 end intrinsic;
 
 // Given a Puiseux series s, returns its associated Weierstrass equation.
-intrinsic WeierstrassEquationDeterminant(s::RngSerPuisElt, Q::RngMPolLoc) -> RngMPolLocElt
+intrinsic WeierstrassEquationDeterminant(s::RngSerPuisElt, Q::RngMPolLoc) ->
+  RngMPolLocElt
 { Computes the Weierstrass equation associated to a Puiseux series }
   x := Q.1; y := Q.2; C, m, n := Coefficients(s); G := CyclicGroup(n);
   g := n gt 1 select G.1^(n - 1) else G.0;
@@ -91,9 +93,9 @@ Curvettes := function(P, v, c, Q)
   // playing the role of x and/or y.
   e_O := ZeroMatrix(IntegerRing(), 1, n); e_O[1][1] := 1; v_O := e_O*Pt_inv;
   if #[f : f in C | LeadingMonomial(f[1][1][1]) eq Q.1] eq 0 then
-    C cat:= [<[<Q.1, 1>], v_O, e_O>]; end if;
+    C := [<[<Q.1, 1>], v_O, e_O>] cat C; end if;
   if #[f : f in C | LeadingMonomial(f[1][1][1]) eq Q.2] eq 0 then
-    C cat:= [<[<Q.2, 1>], v_O, e_O>]; end if;
+    C := [<[<Q.2, 1>], v_O, e_O>] cat C; end if;
   return C;
 end function;
 
@@ -126,14 +128,14 @@ end function;
 
 // Multiplies together all the 'ideals' of curvettes in the sequence S.
 ProductIdeals := function(S)
-return Reverse([i gt 1 select SetToSequence({ProductCurvettes(f, g) : f in S[i],
-    g in Self(i - 1)}) else S[1] : i in [1..#S]])[1];
+return Reverse([i gt 1 select SetToSequence({ProductCurvettes(f, g) :
+    f in S[i], g in Self(i - 1)}) else S[1] : i in [1..#S]])[1];
 end function;
 
 // Raises the 'ideal' of curvettes to the alpha-th power.
 PowerIdeal := function(I, alpha)
-  return Reverse([i gt 1 select ProductIdeals([I] cat [Self(i - 1)]) else I :
-    i in [1..alpha]])[1];
+  return Reverse([i gt 1 select ProductIdeals([I] cat [Self(i - 1)])
+    else I : i in [1..alpha]])[1];
 end function;
 
 forward IntegralClosureIrreducible;
@@ -168,17 +170,15 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
     | &or[g[2][1][i] lt (v_i + max)[1][i] : i in [1..n]]], alpha);
 end function;
 
-intrinsic IntegralClosure(I::RngMPolLoc) -> []
+intrinsic IntegralClosure(I::RngMPolLoc : Ideal := true) -> []
 { Computes the integral closure of a bivariate polynomial ideal }
-require Type(Representative(I)) eq RngMPolLocElt:
-  "Argument must be a polynomial ideal";
-require Rank(Parent(Representative(I))) eq 2:
-  "Argument must be a bivariate polynomial ideal";
-
   // Compute the weighted cluster of base points.
-  B := BasePoints(I : Coefficients := true); P := B[1];
-  Pt := Transpose(P); v := B[2]; f := B[3]; c := B[4]; n := Ncols(P);
-  if n eq 0 then return [[<Parent(f)!f, 1>]]; end if;
+  B := BasePoints(I : Coefficients := true); P := B[1]; Pt := Transpose(P);
+  v := B[2]; f := B[3]; c := B[4]; n := Ncols(P); R := Parent(f);
+  // If the ideal is principal its integral closure is itself.
+  if n eq 0 then
+    if Ideal then return ideal<R | f>; else return [[<R!f, 1>]]; end if;
+  end if;
 
   // Compute the curvettes of the weighted cluster of base points.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
@@ -192,6 +192,20 @@ require Rank(Parent(Representative(I))) eq 2:
   Is := [IntegralClosureIrreducible(P, P*Transpose(v_i), v_i, Cv, max, Q) :
     v_i in ClusterFactorization(P, v)];
   // Multiply all the ideals together, add the affine part and clean gens.
-  return [g[1] cat (f eq 1 select [] else [<Q!f, 1>]) : g in ProductIdeals(Is)
+  Ibar := [g[1] cat (f eq 1 select [] else [<Q!f, 1>]) : g in ProductIdeals(Is)
     | &or[g[2][1][i] lt (v + max)[1][i] : i in [1..n]]];
+
+  // Return the internal representation of the monomials in the curvettes
+  // or return a sequence of ideals instead.
+  ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
+  if Ideal then return ConvertToIdeal(Ibar, R); else return Ibar; end if;
 end intrinsic;
+
+// Computes the curvettes of an element f.
+intrinsic Curvettes(f::RngMPolLocElt) -> []
+{ Computes the curvettes (a.k.a. maximal contact elements) of a plane curve f }
+  P, e, c := ProximityMatrix(f : Coefficients := true); R := Parent(f);
+  Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2); Pt := Transpose(P);
+  return [R!fi[1][1][1] : fi in Curvettes(P, e*Pt^-1, c, Q)];
+end intrinsic;
+

@@ -16,17 +16,16 @@ intrinsic CharExponents(s::RngSerPuisElt) -> []
     // m_i = min{ j | a_j != 0 and j \not\in (n_{i-1}) }
     mi := [e : e in E | e mod ni ne 0][1];
     // n_i = gcd(n, m_1, ..., m_k)
-    ni := Gcd(ni, mi);
-    Append(~charExps, <mi, ni>);
+    ni := Gcd(ni, mi); Append(~charExps, <mi, ni>);
   end while; return charExps;
 end intrinsic;
 
 intrinsic CharExponents(f::RngMPolLocElt) -> []
 { Returns the characteristic exponents of an irreducible bivariate polynomials }
-require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
-  S := PuiseuxExpansionReduced(f);
-  if #S ne 1 then error "Argument must be a non-empty irreducible series";
-  end if; return CharExponents(S[1]);
+  S := PuiseuxExpansion(f);
+  if #S ne 1 then error "Argument must be a irreducible series"; end if;
+  if S[1][2] ne 1 then error "Argument must be a reduced series"; end if;
+  return CharExponents(S[1][1]);
 end intrinsic;
 
 intrinsic CharExponents(G::[RngIntElt]) -> []
@@ -61,30 +60,30 @@ end function;
 intrinsic SemiGroup(n::RngIntElt, M::[RngIntElt]) -> []
 { Computes a minimal set of generators for the semigroup associated
   to a set of charactetistic exponents }
-require Sort([n] cat M) eq [n] cat M: "M/n is not a characteristic set";
-  N := [i gt 1 select Gcd(Self(i - 1), M[i - 1]) else n : i in [1..#M + 1]];
-require Sort(N) eq Reverse(N) and N[#N] eq 1: "M/n is not a characteristic set";
-  G := [i gt 2 select ( (Self(i - 1) - M[i - 2]) * N[i - 2] div N[i - 1] ) +
-    M[i - 1] + ( (N[i - 2] - N[i - 1]) div N[i - 1] ) * M[i - 2]
+require IsCharSequence(n, M) : "Argumnet must be a valid char. sequence";
+
+  E := [i gt 1 select Gcd(Self(i - 1), M[i - 1]) else n : i in [1..#M + 1]];
+  G := [i gt 2 select ( (Self(i - 1) - M[i - 2]) * E[i - 2] div E[i - 1] ) +
+    M[i - 1] + ( (E[i - 2] - E[i - 1]) div E[i - 1] ) * M[i - 2]
         else [n, M[1]][i] : i in [1..#M + 1]];
-  return G;
+  return Sort(G);
 end intrinsic;
 
 intrinsic SemiGroup(s::RngSerPuisElt) -> []
 { Computes a minimal set of generators for the semigroup of the
   Puiseux series of an irreducible plane curve }
   M := CharExponents(s); // (G)amma starts with <n, m, ...>
-require M[1][2] lt M[2][1]: "Puisuex series must be non-inverted";
   return SemiGroup(M[1][2], [M[i][1] : i in [2..#M]]);
 end intrinsic;
 
 intrinsic SemiGroup(f::RngMPolLocElt) -> []
 { Computes a minimal set of generators for the semigroup of
   and irreducible plane curve }
-require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
-  S := PuiseuxExpansionReduced(f);
-  if #S ne 1 then error "Argument must be a non-empty irreducible series";
-  end if; return SemiGroup(S[1]);
+  S := PuiseuxExpansion(f);
+  if #S ne 1 then error "Argument must be an irreducible series"; end if;
+  if S[1][2] ne 1 then error "Argument must be a reduced series"; end if;
+
+  return SemiGroup(S[1][1]);
 end intrinsic;
 
 intrinsic SemiGroup(P::Mtrx, v::Mtrx) -> []
@@ -92,10 +91,10 @@ intrinsic SemiGroup(P::Mtrx, v::Mtrx) -> []
   plane curve from its weighted cluster of singular points }
 require Ncols(P) eq Nrows(P) and Ncols(v) eq Ncols(P) and Nrows(v) eq 1:
   "Arguments do not have the required dimensions";
-require v[1][1] le v[1][Ncols(v)]: "Argument v is not a vector of values";
 require #[i: i in [1..Ncols(P)] | (v * P)[1][i] gt 0] eq 1:
-  "Weighted cluster not irreducible";
-require Gcd(Eltseq(v)) eq 1: "Weighted cluster not irreducible";
+  "Arguments do not define an irreducible weighted cluster.";
+require Gcd(Eltseq(v)) eq 1:
+  "Arguments do not define a reduced weighted cluster.";
 
   n := Ncols(P); Pt := Transpose(P); isSat := &+[Pt[i] : i in [1..n]];
   G := [v[1][1]]; G cat:= [v[1][i] : i in [1..n - 1] |
@@ -156,6 +155,14 @@ intrinsic IsPlaneCurveSemiGroup(G::[RngIntElt]) -> BoolElt
   end if; return true;
 end intrinsic;
 
+intrinsic IsCharSequence(n::RngIntElt, M::[RngIntElt]) -> BoolElt
+{ Whether the inputs is a valid characteristic sequence or not }
+  // e_i := gcd(e_{i-1}, m_i)
+  E := [i gt 1 select Gcd(Self(i - 1), M[i - 1]) else n : i in [1..#M + 1]];
+  if Sort(E) eq Reverse(E) and E[#E] eq 1 and E[#E - 1] ne 1 then
+  return true; else return false; end if;
+end intrinsic;
+
 intrinsic Conductor(G::[RngIntElt]) -> RngIntElt
 { Returns the conductor of the semigroup G }
 require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
@@ -167,6 +174,11 @@ end intrinsic;
 intrinsic Conductor(n::RngIntElt, M::[RngIntElt]) -> RngIntElt
 { Returns the conductor of the char. exponents (n, M) }
   return Conductor(SemiGroup(n, M));
+end intrinsic;
+
+intrinsic Conductor(s::RngSerPuisElt) -> RngIntElt
+{ Returns the conductor of the Puiseux series s }
+  return Conductor(SemiGroup(s));
 end intrinsic;
 
 intrinsic Conductor(f::RngMPolLocElt) -> RngIntElt

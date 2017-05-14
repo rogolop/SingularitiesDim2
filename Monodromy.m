@@ -1,8 +1,6 @@
 // Find kappa s.t f^kappa \in J(f) and find its coordinates.
 JacobianMembership := function(f)
-  Jstd := JacobianIdeal(f); kappa := 1; n := Rank(Parent(f));
-  while NormalForm(f^kappa, Jstd) ne 0 do kappa +:= 1; end while;
-
+  kappa := JacobianPower(f);
   J := IdealWithFixedBasis(Basis(JacobianIdeal(f)));
   Xi := Coordinates(J, f^kappa);
 
@@ -109,12 +107,12 @@ ParsePolynomial := function(S, R)
   if S[lastIdx] eq "-" then m *:= -1; end if; p +:= m; return p;
 end function;
 
-intrinsic Monodromy(f::RngMPolLocElt) -> []
+intrinsic Monodromy(f::RngMPolLocElt) -> Mtrx
 { Computes the matrix of the monodromy action in the cohomology of the
   Milnor fiber using an algorithm by Brieskorn }
 
   mu := MilnorNumber(f);
-  require mu ne Infinity(): "Argument must be an isolated singularity.";
+require mu ne Infinity(): "Argument must be an isolated singularity.";
 
   //---------------------------------------------------------------------------
   //-------------------- STEP 1: Find f^kappa \in J(f) ------------------------
