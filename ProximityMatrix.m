@@ -167,7 +167,7 @@ function ProximityMatrixImpl2(contactMat, branchesProx)
   // Substract one to all the contact numbers and erase the
   // first point of the proximity matricies of the current
   // branches since we are moving down the Enriques diagram.
-  newBranchProx := [* RemoveRowColumn(branchP, 1, 1) : branchP in branchesProx *];
+  newBranchProx := [*RemoveRowColumn(branchP, 1, 1) : branchP in branchesProx*];
   // Traverse each sub-diagram recursivaly.
   splitResult := [* ProximityMatrixImpl2(Submatrix(contactMat, split, split),
     newBranchProx[split]) : split in S *];

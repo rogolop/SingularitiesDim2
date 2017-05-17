@@ -3,9 +3,8 @@ import "ProximityMatrix.m": ProximityMatrixImpl;
 intrinsic YanoExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
 { Computes the generating sequence for the generic b-exponents
   of a characteristic sequence }
-  G := SemiGroup(n, M);
+  G := SemiGroup(n, M); M := [n] cat M;
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
-  M := [n] cat M;
 
   Rk := [i gt 1 select (E[i - 1] div E[i]) * (Self(i - 1) + M[i] - M[i - 1])
     else n : i in [1..#G]];
@@ -14,10 +13,28 @@ intrinsic YanoExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
   rk_ := [2] cat [(rk[i] * E[i]) div E[i - 1] + 1 : i in [2..#G]];
 
   P<t> := PuiseuxSeriesRing(RationalField());
-  s := &+[t^(rk[i]/Rk[i]) * (1 - t)/(1 - t^(1/Rk[i])) : i in [2..#Rk]] -
-        &+[t^(rk_[i]/Rk_[i]) * (1 - t)/(1 - t^(1/Rk_[i])) :
-            i in [1..#Rk_]] + t;
+  s := &+[P | t^(rk[i]/Rk[i]) * (1 - t)/(1 - t^(1/Rk[i])) : i in [2..#Rk]] -
+        &+[P | t^(rk_[i]/Rk_[i]) * (1 - t)/(1 - t^(1/Rk_[i])) :
+          i in [1..#Rk_]] + t;
   return ChangePrecision(s, Infinity());
+end intrinsic;
+
+intrinsic YanoExponents(G::[RngIntElt]) -> RngSetPuisElt
+{ Computes the generating sequence for the generic b-exponents
+  of a semigroup }
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [E[i - 1] div E[i] : i in [2..#G]]; g := #G - 1; n := G[1];
+  M := CharExponents(G : Plane := false); M := [n] cat [m[1] : m in M[2..#M]];
+
+  Rk := [n] cat [N[i - 1] * G[i] : i in [2..#G]];
+  rk := [(M[i] + n) div E[i] : i in [1..#G]];
+  Rk_ := G; rk_ := [2] cat [(rk[i] * E[i]) div E[i - 1] + 1 : i in [2..#G]];
+
+  P<t> := PuiseuxSeriesRing(RationalField());
+  s := &+[P | t^(rk[i]/Rk[i]) * (1 - t)/(1 - t^(1/Rk[i])) : i in [2..#Rk]] -
+        &+[P | t^(rk_[i]/Rk_[i]) * (1 - t)/(1 - t^(1/Rk_[i])) :
+          i in [1..#Rk_]] + t;
+  return ChangePrecision(t^(g - 1)*s, Infinity());
 end intrinsic;
 
 intrinsic MonomialCurve(G::[RngIntElt]) -> []
@@ -64,9 +81,7 @@ intrinsic DeformationCurve(G::[RngIntElt]) -> []
   for i in [1..#D_mu] do
     e_i := Column(D_mu[i]);
     II[e_i] +:= RR.i * phi(D_mu[i][e_i]);
-  end for;
-
-  return II;
+  end for; return II;
 end intrinsic;
 
 intrinsic ESufficiencyDegree(f::RngMPolLocElt) -> RngIntElt

@@ -2,13 +2,13 @@ import "ProximityMatrix.m": ProximityMatrixImpl, CoefficientsVectorBranch;
 
 ExpandWeightedCluster := procedure(~P, ~EE, ~CC, ~S, b)
   // Expand the proximity matrix.
-  P := InsertBlock(ScalarMatrix(Ncols(P) + 1, 1), P, 1, 1);
+  P := InsertBlock(ScalarMatrix(Ncols(P) + 1, 1), P, 1, 1); N := Ncols(P);
   // Expand branches multiplicities.
-  EE := [InsertBlock(ZeroMatrix(IntegerRing(), 1, Ncols(P)), EEi, 1, 1)
+  EE := [InsertBlock(ZeroMatrix(IntegerRing(), 1, N), EEi, 1, 1)
      : EEi in EE];
   // If a free points, it has mult. 1 in the branch & expand the Puiseux series.
   if b ne -1 then
-    EE[b][1, Ncols(P)] := 1;
+    EE[b][1, N] := 1;
     // Number of points of branch b appearing in BP(I)
     m := #[e : e in Eltseq(EE[b]) | e ne 0];
     // If we do not have enough terms of Puiseux already computed...

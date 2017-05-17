@@ -47,7 +47,7 @@ intrinsic JumpingNumbers(G::[RngIntElt]) -> []
   require IsPlaneCurveSemiGroup(G): "G must be the semigroup of a plane curve";
 
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
-  Rset := func<p, q | [a*p+b*q : a in [1..q], b in [1..p] | a*p+b*q lt p*q]>;
+  RSet := func<p, q | [a*p+b*q : a in [1..q], b in [1..p] | a*p+b*q lt p*q]>;
 
   g := #G - 1; JN := [];
   for i in [1..g] do

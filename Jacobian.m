@@ -76,8 +76,7 @@ require tau ne Infinity(): "Argument must be an isolated singularity.";
 
   // Elements nu < c + min(n, m1) - 1 s.t nu \in Gamma.
   Nu1 := [i : i in [0..(c + Min(n, M[1]) - 1) - 1] | SemiGroupMembership(i, G)];
-  //FJf := TjurinaFiltration(f); // i is a gap iff FJf[i] eq  FJf[i+1].
-  FJf := [];
+  FJf := TjurinaFiltration(f); // i is a gap iff FJf[i] eq  FJf[i+1].
   Nu2 := [i-1 + (c + Min(n, M[1]) - 1) : i in [1..#FJf-1] | FJf[i] eq FJf[i+1]];
   return Nu1, Nu2;
 end intrinsic;
@@ -86,12 +85,15 @@ end intrinsic;
 intrinsic TjurinaAlgebraAdapted(f::RngMPolLocElt) -> []
 { An adapted basis for the Tjurina algebra }
   R := Parent(f); g := Rank(R); G := SemiGroup(f);
-  Nu1, Nu2 := TjurinaGaps(f); Cv := Curvettes(f);
-  return [&*[Cv[i]^alpha[i] : i in [1..#G]] : alpha in Nu1 cat Nu2];
+  Nu1, Nu2 := TjurinaGaps(f); Cv := Curvettes(f); B := [];
+  for alpha in Nu1 cat Nu2 do
+    _, b := SemiGroupMembership(alpha, G); B cat:= [b];
+  end for;
+  return [&*[Cv[i]^beta[i] : i in [1..#G]] : beta in B];
 end intrinsic;
 
-// An 'adapted' basis of the Milnor algebra constructed from a monomial
-// basis of the Tjurina algebra.
+// An 'adapted' basis of the Milnor algebra constructed from any basis
+// of the Tjurina algebra.
 intrinsic MilnorAlgebraAdapted(f::RngMPolLocElt, RJf::[RngMPolLocElt]) -> []
 { Construct a basis of the Milnor algebra from a basis of the Tjurina algebra }
   R := Parent(f); J := JacobianIdeal(f); kappa := JacobianPower(f);

@@ -28,9 +28,11 @@ intrinsic CharExponents(f::RngMPolLocElt) -> []
   return CharExponents(S[1][1]);
 end intrinsic;
 
-intrinsic CharExponents(G::[RngIntElt]) -> []
+intrinsic CharExponents(G::[RngIntElt] : Plane := true) -> []
 { Computes the characteristic exponents from the generators of the semigroup }
-require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
+if Plane eq true then
+  require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
+end if;
   M := [G[1]]; N := [G[1]];
   for i in [2..#G] do
     M cat:= [ &+[j ne i select -(N[j - 1] - N[j]) div N[i - 1] * M[j]
