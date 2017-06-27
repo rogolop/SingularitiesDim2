@@ -62,7 +62,7 @@ end function;
 intrinsic SemiGroup(n::RngIntElt, M::[RngIntElt]) -> []
 { Computes a minimal set of generators for the semigroup associated
   to a set of charactetistic exponents }
-require IsCharSequence(n, M) : "Argumnet must be a valid char. sequence";
+require IsCharSequence(n, M) : "Argument must be a valid char. sequence";
 
   E := [i gt 1 select Gcd(Self(i - 1), M[i - 1]) else n : i in [1..#M + 1]];
   G := [i gt 2 select ( (Self(i - 1) - M[i - 2]) * E[i - 2] div E[i - 1] ) +

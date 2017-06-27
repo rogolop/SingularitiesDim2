@@ -139,3 +139,18 @@ intrinsic ASufficiencyBound(f::RngMPolLocElt) -> RngIntElt
   a := 2*Max(I); b := Ceiling(a);
   return a eq b select a + 1 else b;
 end intrinsic;
+
+intrinsic Spectrum(G::[RngIntElt]) -> []
+{ The singularity spectrum of an irreducible plane curve singularity }
+require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
+
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [E[i - 1] div E[i] : i in [2..#G]]; g := #G - 1; n := G[1]; S := [];
+
+  for i in [1..#G - 1] do
+    Mi := G[i+1] div E[i+1];
+    S cat:= [(Mi*j + N[i]*k + r*N[i]*Mi)/(N[i]*G[i+1]) :
+      j in [1..N[i] - 1], k in [1..Mi - 1], r in [0..E[i+1] - 1] |
+        Mi*j + N[i]*k lt N[i]*Mi];
+  end for; return S;
+end intrinsic;

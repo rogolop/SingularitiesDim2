@@ -38,8 +38,7 @@ BasisKJetsH2 := function(f, K, mu)
              Derivative(m, j)*Derivative(f, i)
              : m in F2(MonomialBasis(RM2)), i in [1..g], j in [1..g] | i lt j];
     // Compute the N-jets of B as a vector space over CC.
-    RM := R/M^N; V, G := VectorSpace(RM); // F *might* be superflous after bug fix OR ChangeUniverse(~B, RM). <---------- TODO
-    F := hom<R -> RM | [RM.i : i in [1..g]]>; WG := (F*G)(B); W := sub<V | WG>;
+    RM := R/M^N; V, G := VectorSpace(RM); WG := G(B); W := sub<V | WG>;
     D := Binomial(N + g - 1, g); codimD := D - Dimension(W); N := N + 1;
   end while; return N - 1, W, WG, G;
 end function;
@@ -60,11 +59,11 @@ ConnectionMatrix := function(f, kappa, Xi, u, K, H2, S)
   nablaH2 := NablaN(f, kappa, Xi, u, H2, N); // N
   kJetsH2 := [f^i*e : e in H2, i in [0..K - 1]]; // K
 
-  R := Parent(f); g := Rank(R); M := ideal<R | [R.i : i in [1..g]]>; // ????
-  RM := R/M^N; F := hom<R -> RM | [RM.i : i in [1..g]]>; // F *might* be superflous after bug fix OR ChangeUniverse(~B, RM). <---------- TODO
+  R := Parent(f); g := Rank(R);
+  M := ideal<R | [R.i : i in [1..g]]>; RM := R/M^N;
 
-  VW := Matrix((F*G)(kJetsH2) cat WG); E, T := EchelonForm(Transpose(VW));
-  VnablaH2 := Matrix((F*G)(nablaH2)); C := VnablaH2*Transpose(T);
+  VW := Matrix(G(kJetsH2) cat WG); E, T := EchelonForm(Transpose(VW));
+  VnablaH2 := Matrix(G(nablaH2)); C := VnablaH2*Transpose(T);
 
   M := ZeroMatrix(S, mu, mu); t := S.1;
   for k in [0..K - 1] do
@@ -122,7 +121,7 @@ require mu ne Infinity(): "Argument must be an isolated singularity.";
   kappa, _ := JacobianMembership(f);
 
   // HACK
-  SingOpts := "Singular -q --echo=0 --execute=";
+  SingOpts := "/Applications/Singular.app/Contents/bin/SINGULAR -q --echo=0 --execute=";
   SingPrg := "\"ring R=0,(" cat
     &cat[(i eq 1 select "" else ",") cat Sprint(R.i) : i in [1..g]]
     cat "),ds; " cat "poly f=" cat Sprint(f) cat "; print(lift(jacob(f), f^"
