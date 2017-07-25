@@ -13,4 +13,5 @@
   ProximityMatrix.m
   PuiseuxExpansion.m
   SemiGroup.m
+  Bernstein-Sato.m
 }

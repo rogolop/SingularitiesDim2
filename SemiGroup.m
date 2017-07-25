@@ -150,6 +150,8 @@ intrinsic IsPlaneCurveSemiGroup(G::[RngIntElt]) -> BoolElt
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
   // n_i := e_i / e_{i + 1}
   N := [1] cat [E[i] div E[i + 1] : i in [1..#G - 1]];
+  // n_i != 1 for all i (iff e_i > e_{i+1})
+  if Position(N[2..#N], 1) ne 0 then return false; end if;
   // n_i \bar{m}_{i} \in < m_{0}, ..., m_{i-1} > &&
   // n_i \bar{m}_i < \bar{m}_{i + 1} &&
   if not &and[SemiGroupMembership(N[i] * G[i], G[[1..i - 1]]) : i in [2..#G]] or
