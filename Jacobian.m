@@ -65,7 +65,7 @@ require mu ne Infinity(): "Argument must be an isolated singularity.";
   return kappa;
 end intrinsic;
 
-//
+// The gaps in the Tjurina filtration of the curve.
 intrinsic TjurinaGaps(f::RngMPolLocElt) -> []
 { The gaps of the Tjurina ideal of an irreducible plane curve }
   R := Parent(f); g := Rank(R); tau := TjurinaNumber(f);
