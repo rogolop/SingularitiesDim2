@@ -102,10 +102,10 @@ end function;
 // Unloads the weighted cluster represented by (P, v) where
 // v are virtual values.
 Unloading := function(P, v)
-  N := Transpose(P) * P; n := Ncols(P);
+  N := Transpose(P) * P; n := Ncols(P); R := CoefficientRing(P);
   while #[r : r in Eltseq(v * N) | r lt 0] gt 0 do
     p := [i : i in [1..n] | (v * N)[1][i] lt 0][1];
-    lp := ZeroMatrix(IntegerRing(), 1, n); lp[1][p] := 1;
+    lp := ZeroMatrix(R, 1, n); lp[1][p] := 1;
     rp := (lp * N * Transpose(lp))[1][1];
     np := Ceiling(-(v * N * Transpose(lp))[1][1] / rp);
     v +:= np * lp;
@@ -128,6 +128,7 @@ end function;
 
 // Multiplies together all the 'ideals' of curvettes in the sequence S.
 ProductIdeals := function(S)
+if #S eq 0 then return []; end if;
 return Reverse([i gt 1 select SetToSequence({ProductCurvettes(f, g) :
     f in S[i], g in Self(i - 1)}) else S[1] : i in [1..#S]])[1];
 end function;
@@ -156,7 +157,7 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
   Pt := Transpose(P); n := Ncols(P); isFree := &+[Pt[i] : i in [1..n]];
   e_i := v_i*Pt; p := [j : j in Reverse([1..n]) | isFree[j] eq 0 and
     e_i[1][j] ne 0][1]; // Last free point.
-  Fs := [f : f in Reverse(Cv) | f[3][1][p] gt 0 and f[3][1][1] le v_i[1][1]][1];
+  Fs := [f : f in Cv | f[3][1][p] gt 0 and f[3][1][1] le v_i[1][1]][1];
   beta := v_i[1][1] div Fs[3][1][1];
 
   // Increase the value at the origin & unload.
@@ -197,7 +198,7 @@ intrinsic IntegralClosure(I::RngMPolLoc : Ideal := true) -> []
 
   // Return the internal representation of the monomials in the curvettes
   // or return a sequence of ideals instead.
-  ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
+  ConvertToIdeal := func<I, Q | [Q!(&*[g[1]^g[2] : g in f]) : f in I]>;
   if Ideal then return ConvertToIdeal(Ibar, R); else return Ibar; end if;
 end intrinsic;
 
@@ -209,3 +210,23 @@ intrinsic Curvettes(f::RngMPolLocElt) -> []
   return [R!fi[1][1][1] : fi in Curvettes(P, e*Pt^-1, c, Q)];
 end intrinsic;
 
+GeneratorsOXD := function(P, v, c, R)
+  // Compute the curvettes of the weighted cluster of base points.
+  Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
+  Cv := Curvettes(P, v, c, Q); e := P*Transpose(v);
+  // Sort curvettes by increasing intersection multiplicity with BP(I).
+  Sort(~Cv, func<x, y | (y[3]*e - x[3]*e)[1][1]>); n := Ncols(P);
+  // Compute the maximal ideal values.
+  max := ZeroMatrix(IntegerRing(), 1, n); max[1][1] := 1;
+  max := max*Transpose(P)^-1;
+
+  // Compute systems of generators of irreducible cluster.
+  Is := [IntegralClosureIrreducible(P, P*Transpose(v_i), v_i, Cv, max, Q) :
+    v_i in ClusterFactorization(P, v)];
+  // Multiply all the ideals together, add the affine part and clean gens.
+  Ibar := [g[1] : g in ProductIdeals(Is) | &or[g[2][1][i] lt
+    (v + max)[1][i] : i in [1..n]]];
+
+  ConvertToIdeal := func<I, Q | [Q!(&*[g[1]^g[2] : g in f]) : f in I]>;
+  return ConvertToIdeal(Ibar, R);
+end function;

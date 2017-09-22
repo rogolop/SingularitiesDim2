@@ -1,3 +1,67 @@
+intrinsic YanoExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
+{ Computes the generating sequence for the generic b-exponents
+  of a characteristic sequence }
+  G := SemiGroup(n, M); M := [n] cat M;
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+
+  Rk := [i gt 1 select (E[i - 1] div E[i]) * (Self(i - 1) + M[i] - M[i - 1])
+    else n : i in [1..#G]];
+  rk := [(M[i] + n) div E[i] : i in [1..#G]];
+  Rk_ := [n] cat [(Rk[i] * E[i]) div E[i - 1] : i in [2..#G]];
+  rk_ := [2] cat [(rk[i] * E[i]) div E[i - 1] + 1 : i in [2..#G]];
+
+  P<t> := PuiseuxSeriesRing(RationalField());
+  s := &+[P | t^(rk[i]/Rk[i]) * (1 - t)/(1 - t^(1/Rk[i])) : i in [2..#Rk]] -
+        &+[P | t^(rk_[i]/Rk_[i]) * (1 - t)/(1 - t^(1/Rk_[i])) :
+          i in [1..#Rk_]] + t;
+  return ChangePrecision(s, Infinity());
+end intrinsic;
+
+intrinsic YanoExponents(G::[RngIntElt]) -> RngSetPuisElt
+{ Computes the generating sequence for the generic b-exponents
+  of a semigroup }
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [E[i - 1] div E[i] : i in [2..#G]]; g := #G - 1; n := G[1];
+  M := CharExponents(G); M := [n] cat [m[1] : m in M[2..#M]];
+
+  Rk := [n] cat [N[i - 1] * G[i] : i in [2..#G]];
+  rk := [(M[i] + n) div E[i] : i in [1..#G]];
+  Rk_ := G; rk_ := [2] cat [(rk[i] * E[i]) div E[i - 1] + 1 : i in [2..#G]];
+
+  P<t> := PuiseuxSeriesRing(RationalField());
+  s := &+[P | t^(rk[i]/Rk[i]) * (1 - t)/(1 - t^(1/Rk[i])) : i in [2..#Rk]] -
+        &+[P | t^(rk_[i]/Rk_[i]) * (1 - t)/(1 - t^(1/Rk_[i])) :
+          i in [1..#Rk_]] + t;
+  return ChangePrecision(t^(g - 1)*s, Infinity());
+end intrinsic;
+
+intrinsic BernsteinSatoGeneric(G::[RngIntElt]) -> []
+{ Returns the roots of the generic Bernstein-Sato }
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [E[i - 1] div E[i] : i in [2..#G]]; g := #G - 1; n := G[1];
+  C := CharExponents(G); C := [n] cat [m[1] : m in C[2..#C]];
+  ZZ := IntegerRing(); M := [ZZ | C[i]/E[i] : i in [2..#G]];
+  Q := [M[1]] cat [M[i] - N[i]*M[i-1] : i in [2..g]];
+
+  BS := [];
+  for i in [2..g] do
+    NNi := &*[N[j] : j in [1..i]];
+    Si := [NNi] cat [ZZ | Q[j] * &*[ZZ | N[k] : k in [j+1..i]] : j in [1..i]];
+
+    BSi := [(M[i] + NNi + nu)/(N[i]*G[i+1]) : nu in [0..N[i]*G[i+1] - 1] |
+      Denominator(E[i]*(M[i] + NNi + nu)/(N[i]*G[i+1])) ne 1 and
+      Denominator(G[i+1]*(M[i] + NNi + nu)/(N[i]*G[i+1])) ne 1];
+
+    BStop := [(M[i] + NNi + nu)/(N[i]*G[i+1]) : nu in [0..N[i]*G[i+1] - 1] |
+      Denominator(E[i]*(M[i] + NNi + nu)/(N[i]*G[i+1])) ne 1 and
+      Denominator(G[i+1]*(M[i] + NNi + nu)/(N[i]*G[i+1])) ne 1 and
+      SemiGroupMembership(nu, [10,15,36])];
+    BSan := SetToSequence(Set(BSi) diff Set(BStop));
+
+    BS cat:= [BStop, BSan];
+  end for; return BS;
+end intrinsic;
+
 intrinsic BSOneCharExp(a::RngIntElt, b::RngIntElt) -> []
 { Random computations for the B-S polynomial in the one char exponent case }
 require a lt b: "a < b please";
@@ -17,7 +81,15 @@ require Gcd(a, b) eq 1: "Gcd(a, b) must be equal to 1";
   AssignNames(~A, ["a" cat IntegerToString(t) : t in T]);
   R<x, y> := PolynomialRing(A, [4, 9]); G := hom<Q -> R | R.1, R.2>;
   f := y^a - x^b + &+[R | A.i * G(M[#M - i + 1]) : i in [1..#M]];
+  print "Equation:";
+  print "---------";
   print f;
+  print "\n";
+
+  print "Semigroup:";
+  print "----------";
+  print <a, b>;
+  print "\n";
 
   // Construct blow-up
   //k := Matrix(1, Ncols(P), [1 : i in [1..Ncols(P)]]);
@@ -41,20 +113,31 @@ require Gcd(a, b) eq 1: "Gcd(a, b) must be equal to 1";
       blw[1] := Evaluate(blw[1], blw2);
       blw[2] := Evaluate(blw[2], blw2);
     else
-      blw[1] := Evaluate(blw[1], blw1);
-      blw[2] := Evaluate(blw[2], blw1);
+      print "Blow-up equations:";
+      print "------------------";
+      print <Evaluate(blw[1], blw2), Evaluate(blw[2], blw2)>;
+      print <Evaluate(blw[1], blw1), Evaluate(blw[2], blw1)>;
+      print "\n";
+
+      blw[1] := Evaluate(blw[1], blw2);
+      blw[2] := Evaluate(blw[2], blw2);
     end if;
   end while;
 
   // Resolve the semi-quasi-homogeneous.
-  E := G(f1[1]); f := ExactQuotient(Evaluate(f, <G(blw[1]), G(blw[2])>), E);
+  E := G(f2[1]); f := ExactQuotient(Evaluate(f, <G(blw[1]), G(blw[2])>), E);
+  print "Strict transform & exceptional part:";
+  print "------------------------------------";
   print <f, E>;
-  print blw;
+  print "\n";
 
   // Topological roots
   TopRoots := [<(a + b + nu)/(a*b), nu> : nu in [0..a*b - 1] |
     SemiGroupMembership(nu, [a, b]) ];
+  print "Topological roots:";
+  print "------------------";
   print TopRoots;
+  print "\n";
 
   return [];
 end intrinsic;

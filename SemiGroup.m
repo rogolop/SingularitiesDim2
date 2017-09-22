@@ -120,8 +120,9 @@ end procedure;
 intrinsic SemiGroupMembership(v::RngIntElt, G::[RngIntElt]) -> BoolElt
 { Returns whether or not an integer v belongs to a numerical semigroup G and
   the coordinates v in the semigroup }
-  // Any semigroup is valid.
   V := [0 : i in [1..#G]];
+  if v lt 0 then return false, V; end if;
+  // Any semigroup is valid.
   B := Matrix(v + 1, #G, [IntegerRing() | -1 : i in [1..(v + 1) * #G]]);
   for i in [1..#G] do B[0 + 1][i] := 1; end for;
   b := 0; SemiGroupMemberImpl(v, 1, ~G, ~B, ~b, ~V);
@@ -188,4 +189,21 @@ end intrinsic;
 intrinsic Conductor(f::RngMPolLocElt) -> RngIntElt
 { Returns the conductor of the irreducible plane curve f }
   return Conductor(SemiGroup(f));
+end intrinsic;
+
+forward SemiGroupCoordImpl;
+
+SemiGroupCoordImpl := function(v, i, G);
+  if v eq 0 then return [[0 : i in [1..#G]]]; end if;
+  if v lt 0 or i gt #G then return []; end if; CC := [];
+
+  for k in Reverse([0..(v div G[i])]) do
+    T := SemiGroupCoordImpl(v - k * G[i], i + 1, G);
+    for j in [1..#T] do T[j][i] := k; CC cat:= [T[j]]; end for;
+  end for; return CC;
+end function;
+
+intrinsic SemiGroupCoord(v, G) -> []
+{ Return the coordinates of an integer v in the numerical semigroup G }
+  return SemiGroupCoordImpl(v, 1, G);
 end intrinsic;

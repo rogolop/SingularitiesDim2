@@ -1,44 +1,6 @@
 import "ProximityMatrix.m": ProximityMatrixImpl;
 import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals,
-                            ClusterFactorization, Curvettes;
-
-// Ignore this function for the moment
-//intrinsic PseudoMultiplierChain(I::RngMPolLoc) -> []
-//{ Returns the chain of multiplier ideals associated to an irreducible plane curve }
-//require Rank(I) eq 2: "First argument must be a plane ideal";
-//
-//  BP := BasePoints(I: Coefficients := true);
-//  P := BP[1]; v := BP[2]; f := BP[3]; c := BP[4];
-//  if f ne 1 then error "ideal must be m-primary"; end if;
-//  Pt := Transpose(P); e := v*Pt; rho := e*P; N := Ncols(P);
-//  if &+[rho[1][i] : i in [1..N]] ne 1 then error "ideal must be simple"; end if;
-//  KK := (e*Transpose(e))[1][1]; // Divisor auto-intersection.
-//
-//  // Compute the curvettes of the curve.
-//  Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
-//  Cv := Curvettes(P, e[1]*Pt^-1, c, Q);
-//  // Compute the maximal ideal values.
-//  max := ZeroMatrix(IntegerRing(), 1, N); max[1][1] := 1; max := max*Pt^-1;
-//
-//  v_i := ZeroMatrix(IntegerRing(), 1, N); m_i := 0; J := [];
-//  while m_i lt KK do
-//    // Enlarge the values of the previos cluster.
-//    v_i[1][N] +:= 1; v_i := Unloading(P, v_i); e_i := v_i*Pt;
-//
-//    // Compute generators for the complete ideal J_i.
-//    J_i := [IntegralClosureIrreducible(P, P*Transpose(v_j), v_j, Cv, max, Q) :
-//      v_j in ClusterFactorization(P, v_i)];
-//    J_i := [g[1] : g in ProductIdeals(J_i) |
-//      &or[g[2][1][i] lt (v_i + max)[1][i] : i in [1..N]]];
-//
-//    // Jump the gaps in the filtration.
-//    KK_i := &+[e[1][i] * e_i[1][i] : i in [1..N]]; // Intersection [K, K_i]
-//    Append(~J, J_i); m_i := KK_i;
-//  end while;
-//
-//  return J;
-//end intrinsic;
-
+                            ClusterFactorization, Curvettes, GeneratorsOXD;
 
 // Reference: D. Naie - Jumping numbers of a unibranch curve on a smooth surface
 intrinsic JumpingNumbers(G::[RngIntElt]) -> []
@@ -62,4 +24,51 @@ intrinsic JumpingNumbers(n::RngIntElt, M::[RngIntElt]) -> []
 { Compute the Jumping Numbers < 1 of an irreducible plane curve from its
   char. exponents }
   G := SemiGroup(n, M); return JumpingNumbers(G);
+end intrinsic;
+
+intrinsic MultiplierIdeals(f::RngMPolLocElt) -> []
+{ Computes the Multiplier Ideals and its assocaited Jumping number for a plane
+  curve using the algorithm from Alberich-Àlvarez-Dachs }
+
+  P, E, C := ProximityMatrix(f: Coefficients := true); QQ := Rationals();
+  EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;  N := Ncols(P); F := EQ*PQTinv; K := Matrix([[QQ | 1 : i in [1..N]]]);
+  K := K * PQTinv;
+
+  JN := 0; S := [];
+  while JN lt 1 do
+    D := Unloading(PQ, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
+    lastJN := JN;
+    JN := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..N]]);
+    D := ChangeRing(D, IntegerRing());
+    S cat:= [<lastJN, D, GeneratorsOXD(P, D, C, Parent(f))>];
+  end while; return S;
+end intrinsic;
+
+intrinsic MultiplierIdealsTest(f::RngMPolLocElt) -> []
+{ Test }
+
+  P, E := ProximityMatrix(f); QQ := Rationals(); N := Ncols(P);
+  P := ChangeRing(P, QQ); E := ChangeRing(E, QQ); PTinv := Transpose(P)^-1;
+  F := E*PTinv; K := Matrix([[QQ | 1 : i in [1..N]]]); K := K * PTinv;
+
+
+  FF := Matrix([[QQ | 0 : i in [1..N]]]);
+  KK := Matrix([[QQ | 0 : i in [1..N]]]);
+  //N := 3;
+  FF[1][N] := F[1][N];
+  KK[1][N] := KK[1][N];
+  //FF[1][N-1] := F[1][N-1];
+  //FF[1][4] := F[1][4];
+
+  //FF := F;
+
+  print FF;
+
+  JN := 0; S := [];
+  while JN lt 1 do
+    D := Unloading(P, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*FF - K)]]));
+    JN := Min([(K[1][i] + 1 + D[1][i])/FF[1][i] : i in [1..N] | FF[1][i] ne 0]);
+    //JN := (K[1][N] + 1 + D[1][N])/FF[1][N];
+    S cat:= [JN];
+  end while; return S;
 end intrinsic;
