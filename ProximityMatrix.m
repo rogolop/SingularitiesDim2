@@ -66,16 +66,7 @@ ContactMatrix := function(branches)
   end for; return contact;
 end function;
 
-ProximityMatrixBranch := function(s, maxContact : ExtraPoint := false)
-  // If the branch is the y-axis.
-  if Type(s) eq RngMPolLocElt then
-    if ExtraPoint then maxContact := maxContact + 1; end if;
-    // Construct a proximity matrix with free points only.
-    P := ScalarMatrix(maxContact, 1);
-    for i in [2..maxContact] do P[i][i - 1] := -1; end for;
-    return P;
-  end if; // Otherwise, the branch is represented by a Puiseux series.
-  H := [charExps[2] : charExps in PuiseuxInfo(s)];
+ProximityMatrixSemiGroup := function(H, maxContact : ExtraPoint := false)
   // Smooth inverted branches could have 2 char exps.
   if #H eq 2 and #H[1] eq 2 and H[1][1] eq 0 then Prune(~H); end if;
   // Dimension of the proximity matrix.
@@ -94,6 +85,19 @@ ProximityMatrixBranch := function(s, maxContact : ExtraPoint := false)
       for k in [1..Hi[j]] do P[l + k + 1, l] := -1; end for;
     end for;
   end for; return P;
+end function;
+
+ProximityMatrixBranch := function(s, maxContact : ExtraPoint := false)
+  // If the branch is the y-axis.
+  if Type(s) eq RngMPolLocElt then
+    if ExtraPoint then maxContact := maxContact + 1; end if;
+    // Construct a proximity matrix with free points only.
+    P := ScalarMatrix(maxContact, 1);
+    for i in [2..maxContact] do P[i][i - 1] := -1; end for;
+    return P;
+  end if; // Otherwise, the branch is represented by a Puiseux series.
+  H := [charExps[2] : charExps in PuiseuxInfo(s)];
+  return ProximityMatrixSemiGroup(H, maxContact : ExtraPoint := ExtraPoint);
 end function;
 
 MultiplicityVectorBranch := function(s, maxContact: ExtraPoint := false)
@@ -228,7 +232,7 @@ end function;
 
 intrinsic ProximityMatrix(f::RngMPolLocElt: ExtraPoint := false,
                           Coefficients := false) -> []
-{ Computes de proximity matrix of the resolution of a plane curve }
+{ Computes the proximity matrix of the resolution of a plane curve }
   // Get the general Puiseux expansion of f.
   branches := PuiseuxExpansion(f);
   P, E, C := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint);
@@ -238,4 +242,21 @@ intrinsic ProximityMatrix(f::RngMPolLocElt: ExtraPoint := false,
     I := [j : j in [1..Ncols(P)] | E[i][1][j] ne 0];
     for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
   end for; return P, &+E, CC;
+end intrinsic;
+
+intrinsic ProximityMatrix(G::[RngIntElt]) -> []
+{ Computes the proximity matrix of the resolution of a plane curve
+  with semigroup G }
+  ZZ := Integers(); N := Gcd(G); G := [ZZ!(g/N) : g in G];
+  require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
+  C := CharExponents(G) cat []; n := C[1][2]; I := [];
+  // For each characteristic exponent...
+  for i in [2..#C] do
+    mj := C[i - 1][1]; nj := C[i - 1][2]; mi := C[i][1]; ni := C[i][2];
+    h0 := (mi - mj) div nj; sat := Euclides(mi - mj, nj)[1];
+    Append(~I, sat);
+  end for; I cat:= [[0]];
+  P := ProximityMatrixSemiGroup(I, 1);
+  e := ZeroMatrix(ZZ, 1, Ncols(P)); e[1, Ncols(P)] := N;
+  return P, e*P^-1;
 end intrinsic;

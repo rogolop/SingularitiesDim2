@@ -50,8 +50,8 @@ end function;
 // Prerequisite: The cluster (P, v, c) must be irreducible.
 // && the last point of (P, v) must be free.
 SharplyCurve := function(P, v, c, Q)
-  m := Gcd(Eltseq(v)); v := v div m; G := SemiGroup(P, v);
-  M := CharExponents(G) cat [TailExponentMatrix(P, v)];
+  m := Gcd(Eltseq(v)); v := v div m; G := SemiGroup(P);
+  M := CharExponents(G) cat [TailExponentMatrix(P)];
   // If the curve is the y-axis.
   if #G eq 1 and #c gt 1 and &and[c[i][1] eq 0: i in [2..#c]] then
   return Q.1; end if;

@@ -50,13 +50,13 @@ TailExponentSeries := function(s)
   return [<e, 1> : e in Reverse(E) | e ge charExps[g][1]][1];
 end function;
 
-TailExponentMatrix := function(P, v)
-  E := CharExponents(SemiGroup(P, v)); n := Ncols(P);
+TailExponentMatrix := function(P)
+  E := CharExponents(SemiGroup(P)); N := Ncols(P);
   // If last point is satellite there is no tail exponent
-  if &+Eltseq(P[n]) eq -1 then error "no free point"; end if;
-  Pt := Transpose(P); isSat := &+[Pt[j]: j in [1..n]];
-  p := ([i : i in Reverse([1..n]) | isSat[i] eq -1] cat [0])[1] + 1;
-  return <E[#E][1] + (n - p), 1>;
+  if &+Eltseq(P[N]) eq -1 then error "no free point"; end if;
+  Pt := Transpose(P); isSat := &+[Pt[j]: j in [1..N]];
+  p := ([i : i in Reverse([1..N]) | isSat[i] eq -1] cat [0])[1] + 1;
+  return <E[#E][1] + (N - p), 1>;
 end function;
 
 intrinsic SemiGroup(n::RngIntElt, M::[RngIntElt]) -> []
@@ -88,20 +88,25 @@ intrinsic SemiGroup(f::RngMPolLocElt) -> []
   return SemiGroup(S[1][1]);
 end intrinsic;
 
-intrinsic SemiGroup(P::Mtrx, v::Mtrx) -> []
+intrinsic SemiGroup(P::Mtrx : UseExtraPoints := false) -> []
 { Returns the minimal set of generators for the semigroup of and irreducible
   plane curve from its weighted cluster of singular points }
-require Ncols(P) eq Nrows(P) and Ncols(v) eq Ncols(P) and Nrows(v) eq 1:
-  "Arguments do not have the required dimensions";
-require #[i: i in [1..Ncols(P)] | (v * P)[1][i] gt 0] eq 1:
-  "Arguments do not define an irreducible weighted cluster.";
-require Gcd(Eltseq(v)) eq 1:
-  "Arguments do not define a reduced weighted cluster.";
+require Ncols(P) eq Nrows(P):
+  "Proximity matrix does not have the required dimensions";
+require CoefficientRing(P) eq Integers():
+  "Proximity matrix must be defined over the integers";
+require IsInvertible(P):
+  "Proximity matrix must be invertible";
+require IsUnipotent(P):
+  "Proximity matrix must be unipotent";
 
-  n := Ncols(P); Pt := Transpose(P); isSat := &+[Pt[i] : i in [1..n]];
-  G := [v[1][1]]; G cat:= [v[1][i] : i in [1..n - 1] |
+  if Ncols(P) eq 0 then return [1, 0]; end if;
+  N := Ncols(P); e := ZeroMatrix(Integers(), 1, N); e[1, N] := 1; e := e*P^-1;
+  Pt := Transpose(P); v := e*Pt^-1; isSat := &+[Pt[i] : i in [1..N]];
+  G := [v[1][1]]; G cat:= [v[1][i] : i in [1..N - 1] |
     isSat[i] ne -1 and isSat[i + 1] eq -1];
-  return G;
+  if UseExtraPoints and &+Eltseq(P[N]) ne -1 then return G cat [v[1, N]];
+  else return G; end if;
 end intrinsic;
 
 forward SemiGroupMemberImpl;
@@ -203,7 +208,19 @@ SemiGroupCoordImpl := function(v, i, G);
   end for; return CC;
 end function;
 
-intrinsic SemiGroupCoord(v, G) -> []
+intrinsic SemiGroupCoord(v::RngIntElt, G::[RngIntElt]) -> []
 { Return the coordinates of an integer v in the numerical semigroup G }
   return SemiGroupCoordImpl(v, 1, G);
+end intrinsic;
+
+intrinsic SemiGroup(L::[SeqEnum]) -> []
+{ Constructs a semigroup from the semigroup of each characteristic exponent }
+require #L ne 0: "List must be non-empty";
+require &and[#S eq 2 : S in L]: "Input semigroup must have two elements";
+  P := ProximityMatrix(L[1]); ZZ := Integers();
+  for i in [2..#L] do
+    Qi := ProximityMatrix(L[i]); N := Ncols(P); Ni := Ncols(Qi);
+    P := DiagonalJoin(P, ZeroMatrix(ZZ, Ni - 1, Ni - 1));
+    InsertBlock(~P, Qi, N, N);
+  end for; return SemiGroup(P);
 end intrinsic;

@@ -8,6 +8,58 @@ import "IntegralClosure.m": IntegralClosureIrreducible,
 import "BasePoints.m": ExpandWeightedCluster;
 import "SemiGroup.m": TailExponentSeries;
 
+// Helper funcition
+ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
+
+FiltrationRuptureImpl := function(P, e, c, i, niBi)
+  // Compute the curvettes of the curve.
+  Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex"); ZZ := Integers();
+  Pt := Transpose(P); Pt_inv := Pt^-1;
+  Cv := Curvettes(P, e*Pt_inv, c, Q); N := Ncols(P);
+  // Compute the maximal ideal values.
+  max := ZeroMatrix(IntegerRing(), 1, N); max[1][1] := 1; max := max*Pt_inv;
+
+  // Compute the position of the i-th rupture divisor.
+  VS := RSpace(ZZ, N); isSat := &+[VS | Pt[i] : i in [1..N]]; R := [];
+  for p in [2..N] do // Construct the set of rupture points.
+    // Points proximate to 'p' that are free.
+    prox_p_free := [i : i in [p + 1..N] | Pt[p][i] eq -1 and isSat[i] ne -1];
+    if (isSat[p] eq -1 and (#prox_p_free ge 1 or p eq N)) or
+       (isSat[p] ne -1 and #prox_p_free ge 2) then R cat:= [p]; end if;
+  end for; Ri := R[i];
+
+  // Construct the i-th cluster.
+  vi := ZeroMatrix(IntegerRing(), 1, N); H := [];
+  while vi[1][Ri] lt niBi do
+    // Unload K_i to get a strictly consistent cluster.
+    vi[1][Ri] +:= 1; vi := Unloading(P, vi);
+
+    // Compute generators for the complete ideal H_i.
+    Hi := [IntegralClosureIrreducible(P, P*Transpose(v_j), v_j, Cv, max, Q) :
+      v_j in ClusterFactorization(P, vi)];
+    Hi := [g[1] : g in ProductIdeals(Hi) |
+      &or[g[2][1][i] lt (vi + max)[1][i] : i in [1..N]]];
+    H cat:= [Hi];
+  end while; return H;
+end function;
+
+intrinsic FiltrationRupture(f::RngMPolLocElt, i::RngIntElt : Ideal := true) -> []
+{ Returns a filtration by complete ideals of an irreducible
+  plane curve associated to the i-th rupture divisor }
+require i gt 0: "Second argument must be a positive integer";
+
+  Q := Parent(f); S := PuiseuxExpansion(f: Polynomial := true); ZZ := Integers();
+  if #S gt 1 or S[1][2] gt 1 then error "The curve must be irreducible"; end if;
+  s := S[1][1]; P, e, c := ProximityMatrixImpl([<s, 1>]); G := SemiGroup(P);
+  if i gt #G - 1 then error "Rupture divisor index too large"; end if;
+  Ei := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  n := G[1]; Ni := [0] cat [ZZ!(Ei[i] div Ei[i + 1]) : i in [1..#G - 1]];
+
+  F := FiltrationRuptureImpl(P, e[1], c[1], i, Ni[i + 1]*G[i + 1]);
+  if Ideal eq true then return [ConvertToIdeal(I, Q) : I in F];
+  else return F; end if;
+end intrinsic;
+
 FiltrationImpl := function(s, f, e, M)
   // Compute an upper bound for the necessary points.
   KK := (e*Transpose(e))[1][1]; N := Max(Ncols(e) + M - KK, Ncols(e));
@@ -42,9 +94,6 @@ FiltrationImpl := function(s, f, e, M)
     H cat:= [Hi]; m_i := KK_i;
   end while; return H;
 end function;
-
-// Helper funcition
-ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
 
 intrinsic Filtration(f::RngMPolLocElt, n::RngIntElt : Ideal := true) -> []
 { Returns a filtration by complete ideals of an irreducible

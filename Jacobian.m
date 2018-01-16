@@ -96,10 +96,12 @@ end intrinsic;
 // of the Tjurina algebra.
 intrinsic MilnorAlgebraAdapted(f::RngMPolLocElt, RJf::[RngMPolLocElt]) -> []
 { Construct a basis of the Milnor algebra from a basis of the Tjurina algebra }
-  R := Parent(f); J := JacobianIdeal(f); kappa := JacobianPower(f);
+  R := Parent(f); J := JacobianIdeal(f);
+  kappa := JacobianPower(f);
   for i in [2..kappa] do
     Ji := J + ideal<R | f^i>; tau_i := Dimension(R/(J + ideal<R | f^i>));
     Ii := [R | f^(i-1) * gi : gi in RJf | not (f^(i-1) * gi) in Ji];
+    print Ii;
     RJf cat:= Ii[1..(tau_i - #RJf)];
   end for; return RJf;
 end intrinsic;

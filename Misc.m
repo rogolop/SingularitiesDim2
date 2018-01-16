@@ -24,8 +24,12 @@ end intrinsic;
 intrinsic DeformationCurve(G::[RngIntElt]) -> []
 { Computes the deformations of the monomial curve associated to the
   semigroup G }
-  I := MonomialCurve(G); g := #I; R := Parent(I[1]);
-  M := EModule(R, g); N := ideal<R | I> * M;
+  I := MonomialCurve(G); g := #I; R := Parent(I[1]); ZZ := Integers();
+  Ei := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  Ni := [0] cat [ZZ!(Ei[i] div Ei[i + 1]) : i in [1..g]];
+  nB := [-Ni[i+1] * G[i+1] : i in [1..g]];
+
+  M := EModule(R, nB); N := ideal<R | I> * M;
   J := Transpose(JacobianMatrix(I));
   T_1 := N + sub<M | [M ! m : m in RowSequence(J)]>;
 
@@ -33,11 +37,11 @@ intrinsic DeformationCurve(G::[RngIntElt]) -> []
   for i in [1..g] do
     LT_i := ideal<R | [m[i] : m in LT | m[i] ne 0]>;
     M_i := [M.i * m : m in MonomialBasis(quo<R | LT_i>)];
-    D_mu cat:= [m : m in M_i | Degree(m) gt Degree(I[i])];
+    D_mu cat:= [m : m in M_i | WeightedDegree(m) gt 0];
   end for;
 
   RR := LocalPolynomialRing(RationalField(), Rank(R) + #D_mu, "lglex");
-  AssignNames(~RR, ["v" cat IntegerToString(i) : i in [0..#D_mu - 1]] cat
+  AssignNames(~RR, ["t" cat IntegerToString(i) : i in [0..#D_mu - 1]] cat
                    ["u" cat IntegerToString(i) : i in [0..g]]);
   phi := hom<R -> RR | [RR.i : i in [#D_mu + 1..Rank(RR)]]>;
   II := [RR | phi(f) : f in I];

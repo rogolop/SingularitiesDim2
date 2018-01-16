@@ -31,44 +31,45 @@ intrinsic MultiplierIdeals(f::RngMPolLocElt) -> []
   curve using the algorithm from Alberich-Àlvarez-Dachs }
 
   P, E, C := ProximityMatrix(f: Coefficients := true); QQ := Rationals();
-  EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;  N := Ncols(P); F := EQ*PQTinv; K := Matrix([[QQ | 1 : i in [1..N]]]);
+  EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;
+  N := Ncols(P); F := EQ*PQTinv; K := Matrix([[QQ | 1 : i in [1..N]]]);
   K := K * PQTinv;
 
   JN := 0; S := [];
   while JN lt 1 do
     D := Unloading(PQ, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
     lastJN := JN;
-    JN := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..N]]);
+    JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..N]]);
     D := ChangeRing(D, IntegerRing());
     S cat:= [<lastJN, D, GeneratorsOXD(P, D, C, Parent(f))>];
   end while; return S;
 end intrinsic;
 
-intrinsic MultiplierIdealsTest(f::RngMPolLocElt) -> []
-{ Test }
+intrinsic RuptureJumpingNumbers(G::[RngIntElt]) -> []
+{ Compute the rupture jumping numbers of a plane branch }
+  P, E := ProximityMatrix(G); QQ := Rationals(); ZZ := Integers();
+  N := Ncols(P); P := ChangeRing(P, QQ); Pt := Transpose(P);
+  E := ChangeRing(E, QQ); PTinv := Pt^-1; F := E*PTinv;
+  K := Matrix([[QQ | 1 : i in [1..N]]]); K := K * PTinv;
 
-  P, E := ProximityMatrix(f); QQ := Rationals(); N := Ncols(P);
-  P := ChangeRing(P, QQ); E := ChangeRing(E, QQ); PTinv := Transpose(P)^-1;
-  F := E*PTinv; K := Matrix([[QQ | 1 : i in [1..N]]]); K := K * PTinv;
+  VS := RSpace(ZZ, N); R := []; isSat := &+[VS | Pt[i] : i in [1..N]];
+  for p in [2..N] do // Construct the set of rupture points.
+    // Points proximate to 'p' that are free.
+    prox_p_free := [i : i in [p + 1..N] | Pt[p][i] eq -1 and isSat[i] ne -1];
+    if (isSat[p] eq -1 and (#prox_p_free ge 1)) then R cat:= [p]; end if;
+  end for; R cat:= [N];
 
-
-  FF := Matrix([[QQ | 0 : i in [1..N]]]);
-  KK := Matrix([[QQ | 0 : i in [1..N]]]);
-  //N := 3;
-  FF[1][N] := F[1][N];
-  KK[1][N] := KK[1][N];
-  //FF[1][N-1] := F[1][N-1];
-  //FF[1][4] := F[1][4];
-
-  //FF := F;
-
-  print FF;
-
-  JN := 0; S := [];
-  while JN lt 1 do
-    D := Unloading(P, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*FF - K)]]));
-    JN := Min([(K[1][i] + 1 + D[1][i])/FF[1][i] : i in [1..N] | FF[1][i] ne 0]);
-    //JN := (K[1][N] + 1 + D[1][N])/FF[1][N];
-    S cat:= [JN];
-  end while; return S;
+  JN := [];
+  Ei := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  for i in [1..# G - 1] do
+    JNi := 0; Si := []; r := R[i]; lct := (K[1][r] + 1)/F[1][r];
+    Fi := Matrix([[QQ | 0 : j in [1..N]]]); Fi[1][r] := F[1][r];
+    while JNi lt 1 + lct do
+      D := Unloading(P, Matrix([[QQ | Floor(ei) : ei in Eltseq(JNi*Fi - K)]]));
+      JNi := (K[1][r] + 1 + D[1][r])/F[1][r];
+      if Denominator(Ei[i]*JNi) ne 1 and Denominator(G[i + 1]*JNi) ne 1 then
+        Si cat:= [JNi];
+      end if;
+    end while; JN cat:= [Si[1..#Si - 1]];
+  end for; return JN;
 end intrinsic;

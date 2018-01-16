@@ -50,7 +50,7 @@ NablaN := function(f, kappa, Xi, u, H2, N);
   return [&+[Derivative(uinv*Xi[i]*e, i) : i in [1..g]] - kfk*e : e in H2];
 end function;
 
-// Returns the K-jets (mod t^k) of the de residue matrix on the Gauss-Manin
+// Returns the K-jets (mod t^k) of the residue matrix on the Gauss-Manin
 // connection on the lattice H2.
 ConnectionMatrix := function(f, kappa, Xi, u, K, H2, S)
   mu := #H2; if K eq 0 then return ScalarMatrix(mu, S!1); end if;
