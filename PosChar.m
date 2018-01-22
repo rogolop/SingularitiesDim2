@@ -94,19 +94,15 @@ ethRootImpl := function(I, e)
   return ideal<R | GroebnerBasis(H)>;
 end function;
 
-// Computes the e-th root ideal of an polynomial element using Elimination &
-// modular exponentiation.
+// Computes the e-th root ideal of an polynomial element using Elimination
 intrinsic ethRoot(I::RngMPol, a::RngIntElt, e::RngIntElt) -> RngMPol
 { Computes the ideal (f^a)^[1/p^e]. }
   R := Parent(Basis(I)[1]); k := CoefficientRing(R); p := Characteristic(k);
 require p gt 0: "Computations only valid over finite fields";
 require p eq #k: "The field must be a prime field";
 
-  J := ideal<R | 1>; A := a div p^e; B := a mod p^e;
-  while B gt 0 do
-    J := ethRootImpl(I^(B mod p) * J, e);
-    B := B div p;
-  end while; return I^A * J;
+  A := a div p^e; B := a mod p^e;
+  return I^A * ethRootImpl(I^B, e);
 end intrinsic;
 
 // The chain of ideals (f^i)^[1/p^e] for i = 1, 2, ...
@@ -116,8 +112,8 @@ intrinsic ethRootChain(I::RngMPol, e::RngIntElt) -> []
 require p gt 0: "Computations only valid over finite fields";
 require p eq #k: "The field must be a prime field";
 
-  S := [<Basis(ethRoot(I, i, e)), i> : i in [1..p^e - 1]]; C := [S[1]];
-  for i in [2..#S] do
+  S := [<Basis(ethRoot(I, i, e)), i> : i in [1..p^e]]; C := [S[1]];
+  for i in [2..p^e] do
     if S[i][1] ne C[#C][1] then Append(~C, S[i]); end if;
   end for; return C;
 end intrinsic;
