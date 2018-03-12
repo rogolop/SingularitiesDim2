@@ -210,7 +210,12 @@ intrinsic Curvettes(f::RngMPolLocElt) -> []
   return [R!fi[1][1][1] : fi in Curvettes(P, e*Pt^-1, c, Q)];
 end intrinsic;
 
-GeneratorsOXD := function(P, v, c, R)
+// Computes generators for \pi^* O_{X'}(-D)_O
+intrinsic GeneratorsOXD(P::Mtrx, v::Mtrx, c::SeqEnum[Tup], R::RngMPolLoc) -> []
+{ Computes monomial generators for the stalk at zero of the ideal
+  associated to the divisor D given by the values in v}
+require Ncols(P) eq Ncols(v) and Ncols(P) eq #c: "Dimensions do not agree";
+
   // Compute the curvettes of the weighted cluster of base points.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
   Cv := Curvettes(P, v, c, Q); e := P*Transpose(v);
@@ -229,4 +234,4 @@ GeneratorsOXD := function(P, v, c, R)
 
   ConvertToIdeal := func<I, Q | [Q!(&*[g[1]^g[2] : g in f]) : f in I]>;
   return ConvertToIdeal(Ibar, R);
-end function;
+end intrinsic;
