@@ -1,6 +1,6 @@
 import "SemiGroup.m": Euclides;
 
-intrinsic YanoExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
+intrinsic BExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
 { Computes the generating sequence for the generic b-exponents
   of a characteristic sequence }
   G := SemiGroup(n, M); M := [n] cat M;
@@ -19,7 +19,7 @@ intrinsic YanoExponents(n::RngIntElt, M::[RngIntElt]) -> RngSerPuisElt
   return ChangePrecision(s, Infinity());
 end intrinsic;
 
-intrinsic YanoExponents(G::[RngIntElt]) -> RngSetPuisElt
+intrinsic BExponents(G::[RngIntElt]) -> RngSetPuisElt
 { Computes the generating sequence for the generic b-exponents
   of a semigroup }
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
@@ -218,7 +218,6 @@ intrinsic StudySingularity(G::[RngIntElt]) -> []
       else a := AB[1]; b := AB[2]; c := CD[1]; d := CD[2]; end if;
     end if;
 
-
     print "Rupture divisor #", i, ":";
     print "------------------------";
     print "Resolution data: ", "<nb_i, k_p_i + 1> =", <nB[i], k[1, pi] + 1>, ",";
@@ -238,25 +237,6 @@ intrinsic StudySingularity(G::[RngIntElt]) -> []
       assert(eps2 + 1 eq -(d + c*Ni[i]*MMi[i])/MMi[i + 1]*nu +
         (Mi[i] - Ni[i]*MMi[i] + &*Ni[2..i])/MMi[i + 1]);
       assert(eps1 + eps2 + Ei[i + 1]*rho_nu + nu + 2 eq 0);
-
-      //if g eq 1 then
-      //  C := SemiGroupCoord(nu + n*MMi[2], G);
-      //  print <RR!a*nu/Ni[2],
-      //            a*C[1][1] + b*C[1][2] - a*MMi[2],
-      //        RR!a*nu/Ni[2] + 1 - 1/Ni[2]>;
-      //  print <RR!d*nu/MMi[2],
-      //            c*C[#C][1] + d*C[#C][2] - d*Ni[2],
-      //         RR!d*nu/MMi[2] + 1 - 1/MMi[2]>;
-      //end if;
-      if g eq 2 and i eq g then
-        C := SemiGroupCoord(nu + nB[i], G);
-      //for cc in C do
-      //  print <a*Ni[2]*cc[1] + a*MMi[2]*cc[2] +
-      //    (a*Ni[2]*MMi[2] + b)*cc[3] - a*MMi[3], cc>;
-      //  //print <c*Ni[2]*cc[1] + c*MMi[2]*cc[2] +
-      //  //  (c*Ni[2]*MMi[2] + d)*cc[3] - (c*Ni[2]*MMi[2] + d)*Ni[3]>;
-      //end for;
-      end if;
     end for;
     print "\n";
   end for;

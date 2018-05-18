@@ -28,7 +28,7 @@ end intrinsic;
 
 intrinsic MultiplierIdeals(f::RngMPolLocElt) -> []
 { Computes the Multiplier Ideals and its assocaited Jumping number for a plane
-  curve using the algorithm from Alberich-Àlvarez-Dachs }
+  curve using the algorithm of Alberich-Àlvarez-Dachs }
 
   P, E, C := ProximityMatrix(f: Coefficients := true); QQ := Rationals();
   EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;
