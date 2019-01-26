@@ -1,4 +1,5 @@
 import "ProximityMatrix.m": ProximityMatrixImpl;
+import "SemiGroup.m": Euclides;
 
 intrinsic MonomialCurve(G::[RngIntElt]) -> []
 { Computes the monomial curve assocaited to a semigroup of a
@@ -120,4 +121,20 @@ require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
       j in [1..N[i] - 1], k in [1..Mi - 1], r in [0..E[i+1] - 1] |
         Mi*j + N[i]*k lt N[i]*Mi];
   end for; return S cat [2 - s : s in S];
+end intrinsic;
+
+intrinsic DimensionGenericComponent(a::RngIntElt, b::RngIntElt) -> []
+{ Computes the dimension generic of the moduli space of the moduli space
+  of plane branches with one characteristic exponent using Delorme's formula }
+require a lt b: "a < b please";
+require Gcd(a, b) eq 1: "Gcd(a, b) must be equal to 1";
+
+  H := ContinuedFraction(b/a); k := #H;
+  R := [0 : i in [1..k]]; T := [1 : i in [1..k]];
+  for i in Reverse([2..k]) do
+    R[i - 1] := R[i] + T[i]*H[i];
+    T[i - 1] := T[i] eq 1 and IsEven(R[i - 1]) select 0 else 1;
+  end for;
+
+  return (a - 4)*(b - 4)/4 + R[1];
 end intrinsic;

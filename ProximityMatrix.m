@@ -231,20 +231,24 @@ function ProximityMatrixImpl(branches: ExtraPoint := false)
 end function;
 
 intrinsic ProximityMatrix(f::RngMPolLocElt: ExtraPoint := false,
-                          Coefficients := false) -> []
+                          Coefficients := false, Branches := false) -> []
 { Computes the proximity matrix of the resolution of a plane curve }
   // Get the general Puiseux expansion of f.
   branches := PuiseuxExpansion(f);
   P, E, C := ProximityMatrixImpl(branches: ExtraPoint := ExtraPoint);
-  if not Coefficients then return P, &+E; end if;
+  if not Coefficients then
+    if not Branches then return P, &+E; else return P, E; end if;
+  end if;
   CC := [Parent(C[1][1]) | <1, 0> : i in [1..Nrows(P)]];
   for i in [1..#E] do
     I := [j : j in [1..Ncols(P)] | E[i][1][j] ne 0];
     for j in [1..#I] do CC[I[j]] := C[i][j]; end for;
-  end for; return P, &+E, CC;
+  end for;
+  if not Branches then return P, &+E, CC;
+  else return P, E, CC; end if;
 end intrinsic;
 
-intrinsic ProximityMatrix(G::[RngIntElt]) -> []
+intrinsic ProximityMatrix(G::[RngIntElt] : ExtraPoint := false) -> []
 { Computes the proximity matrix of the resolution of a plane curve
   with semigroup G }
   ZZ := Integers(); N := Gcd(G); G := [ZZ!(g/N) : g in G];
@@ -256,7 +260,18 @@ intrinsic ProximityMatrix(G::[RngIntElt]) -> []
     h0 := (mi - mj) div nj; sat := Euclides(mi - mj, nj)[1];
     Append(~I, sat);
   end for; I cat:= [[0]];
-  P := ProximityMatrixSemiGroup(I, 1);
+  P := ProximityMatrixSemiGroup(I, 1 : ExtraPoint := ExtraPoint);
   e := ZeroMatrix(ZZ, 1, Ncols(P)); e[1, Ncols(P)] := N;
   return P, e*P^-1;
+end intrinsic;
+
+intrinsic ContactMatrix(f::RngMPolLocElt) -> []
+{ Computes de contact numbers of the branches of f }
+  S := PuiseuxExpansion(f);
+  P, E := ProximityMatrixImpl(S); N := Ncols(P);
+  C := ScalarMatrix(#S, 0);
+  for i in [1..#S] do for j in [i + 1..#S] do
+      C[i][j] := &+[E[i][1][k] * E[j][1][k] : k in [1..N]];
+  end for; end for;
+  return C + Transpose(C);
 end intrinsic;

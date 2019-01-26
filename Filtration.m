@@ -39,11 +39,11 @@ FiltrationRuptureImpl := function(P, e, c, i, niBi)
       v_j in ClusterFactorization(P, vi)];
     Hi := [g[1] : g in ProductIdeals(Hi) |
       &or[g[2][1][i] lt (vi + max)[1][i] : i in [1..N]]];
-    H cat:= [Hi];
+    H cat:= [<Hi, vi[1][Ri]>];
   end while; return H;
 end function;
 
-intrinsic FiltrationRupture(f::RngMPolLocElt, i::RngIntElt : Ideal := true) -> []
+intrinsic FiltrationRupture(f::RngMPolLocElt, i::RngIntElt : N := -1, Ideal := true) -> []
 { Returns a filtration by complete ideals of an irreducible
   plane curve associated to the i-th rupture divisor }
 require i gt 0: "Second argument must be a positive integer";
@@ -54,9 +54,10 @@ require i gt 0: "Second argument must be a positive integer";
   if i gt #G - 1 then error "Rupture divisor index too large"; end if;
   Ei := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
   n := G[1]; Ni := [0] cat [ZZ!(Ei[i] div Ei[i + 1]) : i in [1..#G - 1]];
+  if N lt 0 then N := Ni[i + 1] * G[i + 1]; end if;
 
-  F := FiltrationRuptureImpl(P, e[1], c[1], i, Ni[i + 1]*G[i + 1]);
-  if Ideal eq true then return [ConvertToIdeal(I, Q) : I in F];
+  F := FiltrationRuptureImpl(P, e[1], c[1], i, N);
+  if Ideal eq true then return [<ConvertToIdeal(I[1], Q), I[2]> : I in F];
   else return F; end if;
 end intrinsic;
 
@@ -91,22 +92,21 @@ FiltrationImpl := function(s, f, e, M)
 
     // Fill the gaps in the filtration.
     KK_i := &+[e[i] * ei[1][i] : i in [1..N]]; // Intersection [K, K_i]
-    H cat:= [Hi]; m_i := KK_i;
+    H cat:= [<Hi, KK_i>]; m_i := KK_i;
   end while; return H;
 end function;
 
-intrinsic Filtration(f::RngMPolLocElt, n::RngIntElt : Ideal := true) -> []
+intrinsic Filtration(f::RngMPolLocElt : N := -1, Ideal := true) -> []
 { Returns a filtration by complete ideals of an irreducible
   plane curve up to autointersection n }
-require n ge 0: "Second argument must be a non-negative integer";
 
   Q := Parent(f); S := PuiseuxExpansion(f: Polynomial := true);
   if #S gt 1 or S[1][2] gt 1 then error "the curve must be irreducible"; end if;
   s := S[1][1]; f := S[1][3]; _, e, _ := ProximityMatrixImpl([<s, 1>]);
   KK := e[1]*Transpose(e[1]); // Curve auto-intersection.
 
-  F := FiltrationImpl(s, f, e[1], n eq 0 select KK[1][1] else n);
-  if Ideal eq true then return [ConvertToIdeal(I, Q) : I in F];
+  F := FiltrationImpl(s, f, e[1], N lt 0 select KK[1][1] else N);
+  if Ideal eq true then return [<ConvertToIdeal(I[1], Q), I[2]> : I in F];
   else return F; end if;
 end intrinsic;
 
@@ -153,10 +153,8 @@ TjurinaFiltrationImpl := function(S, f)
     Hi := [g[1] : g in ProductIdeals(Hi) | &or[g[2][1][i] lt
       (vi + max)[1][i] : i in [1..N]]];
     Hi := ideal<R | ConvertToIdeal(Hi, R)>; Ji := Hi meet J;
-
-    // Only keep the traces ideals that are strictly contained in the Jacobian.
-    if Ji ne J then JJ cat:= [Ji]; end if;
-  end while; return [J] cat JJ;
+    JJ cat:= [<Ji, vi[1][Ncols(vi)]>];
+  end while; return JJ;
 end function;
 
 intrinsic TjurinaFiltration(f::RngMPolLocElt) -> []

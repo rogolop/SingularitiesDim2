@@ -1,6 +1,6 @@
 import "ProximityMatrix.m": ProximityMatrixImpl;
 import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals,
-                            ClusterFactorization, Curvettes, GeneratorsOXD;
+                            ClusterFactorization;
 
 // Reference: D. Naie - Jumping numbers of a unibranch curve on a smooth surface
 intrinsic JumpingNumbers(G::[RngIntElt]) -> []

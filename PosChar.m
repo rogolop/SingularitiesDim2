@@ -120,16 +120,17 @@ end intrinsic;
 
 // The Nu invariants of a irreducible plane curve for each ideal in
 // the filtration of complete ideals
-intrinsic NuFiltration(f::RngMPolLocElt, n::RngIntElt, p::RngIntElt) -> RngIntElt
+intrinsic NuFiltration(f::RngMPolLocElt, p::RngIntElt
+  : N := -1, e := 1) -> RngIntElt
 { Computes the Nu invariant of f in F_p for each ideal in the filtration
   up to order n. }
   if not IsPrime(p) then error "p must be prime"; end if;
-  R<x, y> := LocalPolynomialRing(FiniteField(p), 2); e := 1;
-  F := Filtration(f, n); f := R!f;
+  R<x, y> := LocalPolynomialRing(FiniteField(p), 2);
+  F := Filtration(f : N := N); f := R!f;
   M := [R | 1 : i in [1..p^e]]; Nu := [-1 : i in [1..#F]];
 
   for i in Reverse([1..#F]) do
-    MiP := ideal<R | StandardBasis([(R!g)^(p^e) : g in F[i]])>;
+    MiP := ideal<R | StandardBasis([(R!g)^(p^e) : g in F[i][1]])>;
     M := [R | NormalForm(fi, MiP) : fi in M];
     NuSearch(f, e, ~MiP, ~M, ~Nu[i]);
   end for; return Nu;
@@ -137,16 +138,17 @@ end intrinsic;
 
 // The Nu invariants of a irreducible plane curve for each ideal in
 // the i-th rupture filtration
-intrinsic NuFiltrationRupture(f::RngMPolLocElt, i::RngIntElt, p::RngIntElt) -> RngIntElt
+intrinsic NuFiltrationRupture(f::RngMPolLocElt, i::RngIntElt, p::RngIntElt
+  : N := -1, e := 1) -> RngIntElt
 { Computes the Nu invariant of f in F_p for each ideal in the filtration
   of the i-th rupture divisor. }
   if not IsPrime(p) then error "p must be prime"; end if;
-  R<x, y> := LocalPolynomialRing(FiniteField(p), 2); e := 1;
-  F := FiltrationRupture(f, i); f := R!f;
+  R<x, y> := LocalPolynomialRing(FiniteField(p), 2);
+  F := FiltrationRupture(f, i : N := N); f := R!f;
   M := [R | 1 : i in [1..p^e]]; Nu := [-1 : i in [1..#F]];
 
   for i in Reverse([1..#F]) do
-    MiP := ideal<R | StandardBasis([(R!g)^(p^e) : g in F[i]])>;
+    MiP := ideal<R | StandardBasis([(R!g)^(p^e) : g in F[i][1]])>;
     M := [R | NormalForm(fi, MiP) : fi in M];
     NuSearch(f, e, ~MiP, ~M, ~Nu[i]);
   end for; return Nu;
