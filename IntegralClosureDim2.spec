@@ -5,7 +5,6 @@
   Jacobian.m
   LocalPolynomialRing.m
   Misc.m
-  Monodromy.m
   Morphisms.m
   MultiplierIdeals.m
   NewtonPolygon.m

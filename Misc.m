@@ -25,7 +25,7 @@ end intrinsic;
 intrinsic DeformationCurve(G::[RngIntElt]) -> []
 { Computes the deformations of the monomial curve associated to the
   semigroup G }
-  I := MonomialCurve(G); g := #I; R := Parent(I[1]); ZZ := Integers();
+  I := MonomialCurve(G); g := #I; R := Universe(I); ZZ := Integers();
   Ei := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
   Ni := [0] cat [ZZ!(Ei[i] div Ei[i + 1]) : i in [1..g]];
   nB := [-Ni[i+1] * G[i+1] : i in [1..g]];

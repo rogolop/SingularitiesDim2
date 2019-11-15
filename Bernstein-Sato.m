@@ -57,7 +57,7 @@ end intrinsic;
 intrinsic StudySingularity(G::[RngIntElt]) -> []
 { Shows all the invariants associated to a plane curve singularity
   with semigroup G }
-  ZZ := IntegerRing(); RR := RealField(4); g := #G - 1;
+  ZZ := IntegerRing(); g := #G - 1;
   require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
   C := CharExponents(G); n := C[1][2]; M := [C[i][1] : i in [2..#G]];
   P, e := ProximityMatrix(G); Pt := Transpose(P); v := e*Pt^-1; N := Ncols(P);
@@ -126,12 +126,12 @@ intrinsic StudySingularity(G::[RngIntElt]) -> []
       eps1 := v1*rho_nu + k1; eps2 := v2*rho_nu + k2;
       print "<nu, rho> =", <nu, rho_nu>, ",", "<eps1, eps2, ei·sigma> =",
         <eps1, eps2, Ei[i + 1]*rho_nu>;
-      if Denominator(eps2) eq 1 then print "***"; end if;
 
       assert(eps1 + 1 eq -a/Ni[i + 1]*nu + 1/Ni[i + 1]);
       assert(eps2 + 1 eq -(d + c*Ni[i]*MMi[i])/MMi[i + 1]*nu +
         (Mi[i] - Ni[i]*MMi[i] + &*Ni[2..i])/MMi[i + 1]);
       assert(eps1 + eps2 + Ei[i + 1]*rho_nu + nu + 2 eq 0);
+
     end for;
     print "\n";
   end for;
@@ -139,103 +139,87 @@ intrinsic StudySingularity(G::[RngIntElt]) -> []
   return [];
 end intrinsic;
 
-intrinsic StudySingularity2(G::[RngIntElt]) -> []
-{ Shows all the invariants associated to a plane curve singularity
-  with semigroup G }
-  ZZ := IntegerRing(); RR := RealField(4); g := #G - 1;
-  require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
-  C := CharExponents(G); n := C[1][2]; M := [C[i][1] : i in [2..#G]];
-  P, e := ProximityMatrix(G : ExtraPoint := true);
-  Pt := Transpose(P); vF := e*Pt^-1;
-  N := Ncols(P); vK := Matrix(ZZ, [[1 : i in [1..N]]]); vK := vK*Pt^-1;
-  P_inv := P^-1; Pt_inv := Transpose(P_inv); N := Ncols(P);
-  E := -Transpose(P)*P;
+intrinsic StudySingularity2(f::RngMPolLocElt) -> []
+{ Shows all the invariants associated to a plane curve singularity f }
+  P, eF := ProximityMatrix(f : ExtraPoint := true);
+  vF := eF*Transpose(P)^-1; E := -Transpose(P)*P;
+  N := Ncols(P); ZZ := IntegerRing();
+  vK := Matrix(ZZ, [[1 : i in [1..N]]]); vK := vK*Transpose(P)^-1;
 
-  // Numerical data
-  Ei := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
-  n := G[1]; Ni := [0] cat [ZZ!(Ei[i] div Ei[i + 1]) : i in [1..g]];
-  Mi := [0] cat [ZZ!(M[i]/Ei[i + 1]) : i in [1..g]];
-  MMi := [ZZ!(G[i]/Ei[i]) : i in [1..#G]];
-  Qi := [Mi[2]] cat [ZZ!((M[i + 1] - M[i])/Ei[i + 2]) : i in [1..g - 1]];
-  nB := [Ni[i+1] * G[i+1] : i in [1..g]];
-
-  print "\n";
-  print "SemiGroup: ", G;
-  print "Char. Exponents: ", <n, M>;
-  print "Ei's: ", Ei, "Ni's: ", Ni;
-  print "MMi's: ", MMi, "Mi's: ", Mi;
-  print "Qi's: ", Qi, "nB's: ", nB, "\n";
-
-  VS := RSpace(ZZ, N); isSat := &+[VS | Pt[i] : i in [1..N]]; R := [0];
-  for p in [2..N] do // Construct the set of rupture points.
-    // Points proximate to 'p' that are free.
-    prox_p_free := [i : i in [p + 1..N] | Pt[p][i] eq -1 and isSat[i] ne -1];
-    if (isSat[p] eq -1 and (#prox_p_free ge 1 or p eq N)) or
-       (isSat[p] ne -1 and #prox_p_free ge 2) then R cat:= [p]; end if;
+  // Detect rupture & dead-end divisors
+  EE := RowSequence(E - DiagonalMatrix(ZZ, Diagonal(E)));
+  Rup := [i : i in [1..N] | &+EE[i] ge 3];
+  Dead := [i : i in [1..N] | &+EE[i] eq 1];
+  DeadEnd := [];
+  for qi in Dead do
+    eqi := ZeroMatrix(ZZ, 1, N); eqi[1][qi] := 1;
+    eqi := eqi*P^-1; DeadEnd cat:= [eqi];
   end for;
 
-  // 'Curvette' points are always free.
-  freePoints := [p : p in [1..N] | isSat[p] eq 0]; curvPoints := [1];
-  for p in freePoints do
-    // Points proximate to 'p'.
-    prox_p := [i : i in [p + 1..N] | Pt[p][i] eq -1];
-    // Points proximate to 'p' that are satellites.
-    prox_p_sat := [q : q in prox_p | isSat[q] eq -1];
-    // Select 'p' is if it has no proximate points in K (dead end) or
-    // all its proximate points in K are satellite (rupture point).
-    if #prox_p eq 0 or #prox_p eq #prox_p_sat then
-      curvPoints cat:= [p]; end if;
-  end for; MaxContact := [];
-  for p in curvPoints do
-    i_p := ZeroMatrix(IntegerRing(), 1, N); i_p[1][p] := 1;
-    e_p := i_p*P_inv; Ip := [i : i in [1..N] | e_p[1][i] ne 0];
-    v_p := e_p*Pt_inv; MaxContact cat:= [v_p];
-  end for;
-  print MaxContact;
-
-  for i in [1..g] do // For each rupture divisor
-    // Current rupture points
-    pi := R[i+1];
-    // Points that pi is proximate too, i.e., divisors cutting E_p_i.
-    pi_prox := [k : k in [1..N] | E[pi][k] eq 1];
-
-    print i;
-    print "Topological roots candidates:";
-
-    Gi := G[1..i+1]; d := Gcd(Gi); Gi := [ZZ!(gi / d) : gi in Gi];
-    GiVals := [nu : nu in [0..2*nB[i] - 1] | SemiGroupMembership(nu, Gi)];
-    for nu in GiVals do
-      for C in SemiGroupCoord(nu, Gi) do
-      print C;
-        vNu := &+[MaxContact[j]*C[j] : j in [1..#C]];
-        sigmaNu := -(vNu[1, pi] + vK[1, pi] + 1)/vF[1, pi];
-        eps1 := vF[1, pi_prox[1]] * sigmaNu + vNu[1, pi_prox[1]] +
-          vK[1, pi_prox[1]];
-        eps2 := vF[1, pi_prox[2]] * sigmaNu + vNu[1, pi_prox[2]] +
-          vK[1, pi_prox[2]];
-        eps3 := vF[1, pi_prox[3]] * sigmaNu + vNu[1, pi_prox[3]] +
-          vK[1, pi_prox[3]];
-        print <nu, sigmaNu>, <eps1, eps2, eps3>, eps1 + eps2 + eps3;
-        print <vNu[1, pi_prox[1]], vNu[1, pi_prox[2]], vNu[1, pi_prox[3]]>;
-      end for;
-
-      print "\n";
+  for pi in Rup[1..1] do // <----------------------------------
+    // Divisors cutting E_p_i.
+    Div := [i : i in [1..N] | E[pi][i] eq 1];
+    // Sharply curve & its semigroup
+    ei := ZeroMatrix(ZZ, 1, N); ei[1][pi] := 1; ei := ei*P^-1;
+    idx := [j : j in [1..N] | ei[1][j] ne 0];
+    Gi := SemiGroup(Submatrix(P, idx, idx)); g := #Gi - 1;
+    // Semigroup numerology
+    Ei := [j gt 1 select Gcd(Self(j-1), Gi[j]) else Gi[1] : j in [1..#Gi]];
+    Ni := [0] cat [ZZ!(Ei[j] div Ei[j + 1]) : j in [1..g]];
+    // Maximal contact elements of the sharply curve
+    MaxContact := [];
+    for gi in Gi do
+      qi := [i : i in [1..#DeadEnd] |
+        &+[DeadEnd[i][1][j]*ei[1][j] : j in [1..N]] eq gi];
+      if #qi gt 1 then
+        error "Maximal contact elements not unique";
+      end if;
+      MaxContact cat:= [DeadEnd[qi[1]]*Transpose(P)^-1];
     end for;
 
-    //  rho_nu := -(k[1, pi] + 1 + nu)/nB[i];
-    //  eps1 := v1*rho_nu + k1; eps2 := v2*rho_nu + k2;
-    //  print "<nu, rho> =", <nu, rho_nu>, ",", "<eps1, eps2, ei·sigma> =",
-    //    <eps1, eps2, Ei[i + 1]*rho_nu>;
-    //  if Denominator(eps2) eq 1 then print "***"; end if;
+    // Extend the semigroup. One extra "max. contact" for each Div - 2
+    Gi cat:= [Ni[g + 1]*Gi[g + 1] : j in [1..(#Div - 2)]];
+    qi := [i : i in [1..#DeadEnd] |
+      &+[DeadEnd[i][1][j]*ei[1][j] : j in [1..N]] eq Gi[#Gi]];
+    MaxContact cat:= [DeadEnd[qi[j]]*Transpose(P)^-1 : j in [1..#qi]];
 
-    //  assert(eps1 + 1 eq -a/Ni[i + 1]*nu + 1/Ni[i + 1]);
-    //  assert(eps2 + 1 eq -(d + c*Ni[i]*MMi[i])/MMi[i + 1]*nu +
-    //    (Mi[i] - Ni[i]*MMi[i] + &*Ni[2..i])/MMi[i + 1]);
-    //  assert(eps1 + eps2 + Ei[i + 1]*rho_nu + nu + 2 eq 0);
-    //end for;
-  end for;
+    print "Rupture divisor:", pi;
+    print "Topological roots candidates:";
+    print "=============================\n";
 
-  return [];
+    GiVals := [nu : nu in [0..vF[1, pi] - 1] | SemiGroupMembership(nu, Gi)];
+    for nu in GiVals do // For each element in the value group
+      sigmaNu := -(vK[1, pi] + nu + 1)/vF[1, pi];
+
+      flag := &or[Denominator(vF[1, Div[r]] * sigmaNu) eq 1 : r in [3..#Div]];
+      if true then
+      //if flag then
+
+      print "Root:", <nu, sigmaNu>;
+      print "-------------------\n";
+      for C in SemiGroupCoord(nu, Gi) do // For each possible expression of nu
+          print "SemiGroup coordinates:", C;
+          vNu := &+[MaxContact[j]*C[j] : j in [1..#C]]; Eps := [];
+          assert(vNu[1, pi] eq nu); Eps := [];
+          for r in [1..#Div] do // For each divisor cutting Ei
+            print <vF[1, Div[r]], vNu[1, Div[r]] + vK[1, Div[r]]>;
+            eps := vF[1, Div[r]] * sigmaNu + vNu[1, Div[r]] + vK[1, Div[r]];
+            Eps cat:= [eps];
+          end for;
+          print "Epsilons:", Eps;
+          print &+Eps;
+          print "Omega values:", [vNu[1, Div[r]] : r in [1..#Div]];
+          if &or[ eps eq -1 : eps in Eps] then print "Pole!";
+          else print "Residue:", 2 - #Div + &+[1/(eps + 1) : eps in Eps]; end if;
+          print "\n";
+      end for;
+      print "\n";
+
+      end if;
+    end for;
+
+    print "\n";
+  end for; return [];
 end intrinsic;
 
 function PartialBellPolynomialImpl(n, k, R)
