@@ -156,7 +156,7 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
     eqi := eqi*P^-1; DeadEnd cat:= [eqi];
   end for;
 
-  for pi in Rup[1..1] do // <----------------------------------
+  for pi in Rup[1..#Rup] do
     // Divisors cutting E_p_i.
     Div := [i : i in [1..N] | E[pi][i] eq 1];
     // Sharply curve & its semigroup
@@ -202,7 +202,6 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
           vNu := &+[MaxContact[j]*C[j] : j in [1..#C]]; Eps := [];
           assert(vNu[1, pi] eq nu); Eps := [];
           for r in [1..#Div] do // For each divisor cutting Ei
-            print <vF[1, Div[r]], vNu[1, Div[r]] + vK[1, Div[r]]>;
             eps := vF[1, Div[r]] * sigmaNu + vNu[1, Div[r]] + vK[1, Div[r]];
             Eps cat:= [eps];
           end for;
