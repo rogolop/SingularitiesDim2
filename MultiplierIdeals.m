@@ -2,11 +2,11 @@ import "ProximityMatrix.m": ProximityMatrixImpl;
 import "IntegralClosure.m": IntegralClosureIrreducible, Unloading, ProductIdeals,
                             ClusterFactorization;
 
-// Reference: D. Naie - Jumping numbers of a unibranch curve on a smooth surface
+// Reference: Naie - "Jumping numbers of a unibranch curve on a smooth surface"
 intrinsic JumpingNumbers(G::[RngIntElt]) -> []
 { Compute the Jumping Numbers < 1 of an irreducible plane curve
   from its semigroup }
-  require IsPlaneCurveSemiGroup(G): "G must be the semigroup of a plane curve";
+require IsPlaneCurveSemiGroup(G): "G must be the semigroup of a plane curve";
 
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
   RSet := func<p, q | [a*p+b*q : a in [1..q], b in [1..p] | a*p+b*q lt p*q]>;
@@ -19,34 +19,58 @@ intrinsic JumpingNumbers(G::[RngIntElt]) -> []
   end for; return JN;
 end intrinsic;
 
-// Reference: D. Naie - Jumping numbers of a unibranch curve on a smooth surface
+// Reference: Naie - "Jumping numbers of a unibranch curve on a smooth surface"
 intrinsic JumpingNumbers(n::RngIntElt, M::[RngIntElt]) -> []
 { Compute the Jumping Numbers < 1 of an irreducible plane curve from its
   char. exponents }
+
   G := SemiGroup(n, M); return JumpingNumbers(G);
 end intrinsic;
 
-intrinsic MultiplierIdeals(f::RngMPolLocElt) -> []
-{ Computes the Multiplier Ideals and its assocaited Jumping number for a plane
-  curve using the algorithm of Alberich-Àlvarez-Dachs }
+intrinsic MultiplierIdeals(f::RngMPolLocElt : MaxJN := 1) -> []
+{ Computes the Multiplier Ideals and its associated Jumping Number for an
+  plane curve in a smooth complex surface using the algorithm
+  of Alberich-Àlvarez-Dachs }
 
   P, E, C := ProximityMatrix(f: Coefficients := true); QQ := Rationals();
   EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;
   N := Ncols(P); F := EQ*PQTinv; K := Matrix([[QQ | 1 : i in [1..N]]]);
-  K := K * PQTinv;
+  K := K * PQTinv; ZZ := Integers(); k := Parent(f);
 
   JN := 0; S := [];
-  while JN lt 1 do
+  while JN lt MaxJN do
     D := Unloading(PQ, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
     lastJN := JN;
     JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..N]]);
-    D := ChangeRing(D, IntegerRing());
-    S cat:= [<lastJN, D, GeneratorsOXD(P, D, C, Parent(f))>];
+    S cat:= [<GeneratorsOXD(P, ChangeRing(D, ZZ), C, k), lastJN>];
   end while; return S;
 end intrinsic;
 
-intrinsic RuptureJumpingNumbers(G::[RngIntElt]) -> []
-{ Compute the rupture jumping numbers of a plane branch }
+intrinsic MultiplierIdeals(I::RngMPolLoc : MaxJN := 1) -> []
+{ Computes the Multiplier Ideals and its associated Jumping Number for an
+  m-primary ideal in a smooth complex surface using the algorithm
+  of Alberich-Àlvarez-Dachs }
+require Gcd(Basis(I)) eq 1: "Ideal must be m-primary";
+
+  P, F, _, C := BasePoints(I: Coefficients := true); QQ := Rationals();
+  F := ChangeRing(Matrix(F), QQ); PQ := ChangeRing(P, QQ); ZZ := Integers();
+  PQTinv := Transpose(PQ)^-1; k := Universe(Basis(I)); N := Ncols(P);
+  // Compute relative canonical divisor
+  K := Matrix([[QQ | 1 : i in [1..N]]]); K := K * PQTinv;
+
+  JN := 0; S := [];
+  while JN lt MaxJN do
+    D := Unloading(PQ, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
+    lastJN := JN;
+    JN, i := Min([(K[1][i] + 1 + D[1][i])/F[1][i] : i in [1..N]]);
+    S cat:= [<GeneratorsOXD(P, ChangeRing(D, ZZ), C, k), lastJN>];
+  end while; return S;
+end intrinsic;
+
+intrinsic TopologicalRootsBS(G::[RngIntElt]) -> []
+{ Compute the topological roots of the Bernstein-Sato polynomial of a
+  topological class given by the semigroup G }
+
   P, E := ProximityMatrix(G); QQ := Rationals(); ZZ := Integers();
   N := Ncols(P); P := ChangeRing(P, QQ); Pt := Transpose(P);
   E := ChangeRing(E, QQ); PTinv := Pt^-1; F := E*PTinv;

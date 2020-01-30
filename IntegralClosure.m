@@ -174,8 +174,8 @@ end function;
 intrinsic IntegralClosure(I::RngMPolLoc : Ideal := true) -> []
 { Computes the integral closure of a bivariate polynomial ideal }
   // Compute the weighted cluster of base points.
-  B := BasePoints(I : Coefficients := true); P := B[1]; Pt := Transpose(P);
-  v := B[2]; f := B[3]; c := B[4]; n := Ncols(P); R := Parent(f);
+  P, v, f, c := BasePoints(I : Coefficients := true);
+  Pt := Transpose(P); n := Ncols(P); R := Parent(f);
   // If the ideal is principal its integral closure is itself.
   if n eq 0 then
     if Ideal then return ideal<R | f>; else return [[<R!f, 1>]]; end if;

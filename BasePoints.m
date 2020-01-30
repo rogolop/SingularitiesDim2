@@ -111,6 +111,6 @@ intrinsic BasePoints(I::RngMPolLoc : Coefficients := false) -> []
 
   // Select 1 as affine part iff F is a unit.
   F := Evaluate(F, <0, 0>) ne 0 select Parent(F)!1 else F;
-  if Coefficients then return <P, v, F, C>;
-  else return <P, v, F>; end if;
+  if Coefficients then return P, v, F, C;
+  else return P, v, F; end if;
 end intrinsic;

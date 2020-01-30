@@ -76,9 +76,9 @@ require tau ne Infinity(): "Argument must be an isolated singularity.";
 
   // Elements nu < c + min(n, m1) - 1 s.t nu \in Gamma.
   Nu1 := [i : i in [0..(c + Min(n, M[1]) - 1) - 1] | SemiGroupMembership(i, G)];
-  FJf := TjurinaFiltration(f); // i is a gap iff FJf[i] eq  FJf[i+1].
-  Nu2 := [i - 1 + (c + Min(n, M[1]) - 1) : i in [1..#FJf-1] | FJf[i] eq FJf[i+1]];
-  return Nu1, Nu2;
+  FJf := TjurinaFiltration(f); // i is a gap iff FJf[i] eq FJf[i+1].
+  Nu2 := [i - 1 + (c + Min(n, M[1]) - 1) : i in [1..#FJf-1]
+    | FJf[i][1] eq FJf[i+1][1]]; return Nu1, Nu2;
 end intrinsic;
 
 // An special adapted basis for the finite dimension algebra R/(J(f) + f)
@@ -88,58 +88,19 @@ intrinsic TjurinaAlgebraAdapted(f::RngMPolLocElt) -> []
   Nu1, Nu2 := TjurinaGaps(f); Cv := Curvettes(f); B := [];
   for alpha in Nu1 cat Nu2 do
     _, b := SemiGroupMembership(alpha, G); B cat:= [b];
-  end for;
-  return [&*[Cv[i]^beta[i] : i in [1..#G]] : beta in B];
+  end for; assert(#B eq TjurinaNumber(f));
+  S := [&*[Cv[i]^beta[i] : i in [1..#G]] : beta in B];
+  return S;
 end intrinsic;
 
 // An 'adapted' basis of the Milnor algebra constructed from any basis
 // of the Tjurina algebra.
 intrinsic MilnorAlgebraAdapted(f::RngMPolLocElt, RJf::[RngMPolLocElt]) -> []
 { Construct a basis of the Milnor algebra from a basis of the Tjurina algebra }
-  R := Parent(f); J := JacobianIdeal(f);
-  kappa := JacobianPower(f);
+  R := Parent(f); J := JacobianIdeal(f); kappa := JacobianPower(f);
   for i in [2..kappa] do
-    Ji := J + ideal<R | f^i>; tau_i := Dimension(R/(J + ideal<R | f^i>));
+    Ji := J + ideal<R | f^i>; tau_i := Dimension(R/Ji);
     Ii := [R | f^(i-1) * gi : gi in RJf | not (f^(i-1) * gi) in Ji];
     RJf cat:= Ii[1..(tau_i - #RJf)];
   end for; return RJf;
-end intrinsic;
-
-//
-intrinsic DifferentialsMonoid(G::[RngIntElt]) -> []
-{ Test }
-require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
-
-  c := Conductor(G); g := #G - 1;
-  M := [SemiGroupCoord(nu, G) : nu in [0..c]];
-  MM := []; for m in M do MM cat:= m; end for;
-
-  // Coefficients ring
-  P := PolynomialRing(Rationals(), g*c - &+[G[i] : i in [2..#G]] + 2*#MM);
-  AssignNames(~P, &cat[["a" cat IntegerToString(i) cat "," cat IntegerToString(j)
-                    : j in [G[i]..c - 1]] : i in [2..#G]] cat
-                  ["A" cat &*[i ne #m select IntegerToString(m[i]) cat ","
-                    else IntegerToString(m[i]) : i in [1..#m]] : m in MM] cat
-                  ["B" cat &*[i ne #m select IntegerToString(m[i]) cat ","
-                    else IntegerToString(m[i]) : i in [1..#m]] : m in MM]
-  );
-
-  // Parameterization ring
-  R<t> := LaurentSeriesRing(P);
-  x := t^G[1]; y := &+[P.i * t^(G[2] + i - 1) : i in [1..(c - G[2])]];
-  z := &+[P.(c - G[2] + i) * t^(G[3] + i - 1) : i in [1..(c - G[3])]];
-  dx := Derivative(x);
-  dy := Derivative(y); dydx := dy/dx;
-  dz := Derivative(z); dzdx := dz/dx;
-
-  // Regular ring
-  S := PolynomialRing(P, #G); s := g*c - &+[G[i] : i in [2..#G]];
-  AssignNames(~S, ["x" cat IntegerToString(i) : i in [0..g]]);
-  f := &+[P.(s + 0*#MM + i) * &*[S.j^MM[i][j] : j in [1..#G]] :
-    i in [1..#MM]];
-  g := &+[P.(s + 1*#MM + i) * &*[S.j^MM[i][j] : j in [1..#G]] :
-    i in [1..#MM]];
-
-  print Evaluate(f, <x, y, z>) + Evaluate(g, <x, y, z>) * dydx;
-  return [];
 end intrinsic;

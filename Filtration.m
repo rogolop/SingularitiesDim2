@@ -153,12 +153,15 @@ TjurinaFiltrationImpl := function(S, f)
     Hi := [g[1] : g in ProductIdeals(Hi) | &or[g[2][1][i] lt
       (vi + max)[1][i] : i in [1..N]]];
     Hi := ideal<R | ConvertToIdeal(Hi, R)>; Ji := Hi meet J;
-    JJ cat:= [<Ji, vi[1][Ncols(vi)]>];
+    // Ignore the begining of the filtration.
+    if Ji eq J then continue;
+    else JJ cat:= [<Ji, vi[1][Ncols(vi)]>];
+    end if;
   end while; return JJ;
 end function;
 
 intrinsic TjurinaFiltration(f::RngMPolLocElt) -> []
-{ Returns an adapted filtration of the Tjurinna ideal of an irreducible
+{ Returns an adapted filtration of the Tjurina ideal of an irreducible
   plane curve }
 
   Q := Parent(f); S := PuiseuxExpansion(f: Polynomial := true);
