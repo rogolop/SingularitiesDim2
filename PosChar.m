@@ -72,7 +72,7 @@ require Basis(I)[1] ne 1 and Gcd(Basis(I)) eq 1:
   "Second argument must be an m-primary ideal";
 
   Ip := ideal<R | [g^(p^e) : g in Basis(I)]>; res := 0;
-  M := [R | 1 : i in [1..p^e]]; NuSearch(e, ~Ip, ~M, ~res); return res;
+  M := [R | 1 : i in [1..p^e]]; NuSearch(f, e, ~Ip, ~M, ~res); return res;
 end intrinsic;
 
 // Helper function for ethRoot where the actual computation happens.
