@@ -48,7 +48,7 @@ intrinsic BernsteinSatoGeneric(G::[RngIntElt]) -> []
       Denominator(E[i]*(M[i] + NNi + nu)/(N[i]*G[i+1])) ne 1 and
       Denominator(G[i+1]*(M[i] + NNi + nu)/(N[i]*G[i+1])) ne 1 and
       SemiGroupMembership(nu, Gi)];
-    BSan := SetToSequence(Set(BSi) diff Set(BStop));
+    BSan := Sort(SetToSequence(Set(BSi) diff Set(BStop)));
 
     BS cat:= [BStop, BSan];
   end for; return BS;
