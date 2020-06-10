@@ -183,7 +183,10 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
       &+[DeadEnd[i][1][j]*ei[1][j] : j in [1..N]] eq Gi[#Gi]];
     MaxContact cat:= [DeadEnd[qi[j]]*Transpose(P)^-1 : j in [1..#qi]];
 
+    print "####################";
     print "Rupture divisor:", pi;
+    print "####################";
+    print "\n";
     print "Topological roots candidates:";
     print "=============================\n";
 
@@ -191,12 +194,8 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
     for nu in GiVals do // For each element in the value group
       sigmaNu := -(vK[1, pi] + nu + 1)/vF[1, pi];
 
-      flag := &or[Denominator(vF[1, Div[r]] * sigmaNu) eq 1 : r in [3..#Div]];
-      if true then
-      //if flag then
-
       print "Root:", <nu, sigmaNu>;
-      print "-------------------\n";
+      print "-------------------";
       for C in SemiGroupCoord(nu, Gi) do // For each possible expression of nu
           print "SemiGroup coordinates:", C;
           vNu := &+[MaxContact[j]*C[j] : j in [1..#C]]; Eps := [];
@@ -206,18 +205,15 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
             Eps cat:= [eps];
           end for;
           print "Epsilons:", Eps;
-          print &+Eps;
           print "Omega values:", [vNu[1, Div[r]] : r in [1..#Div]];
           if &or[ eps eq -1 : eps in Eps] then print "Pole!";
           else print "Residue:", 2 - #Div + &+[1/(eps + 1) : eps in Eps]; end if;
-          print "\n";
+          print "";
       end for;
-      print "\n";
+      print "";
 
-      end if;
     end for;
 
-    print "\n";
   end for; return [];
 end intrinsic;
 

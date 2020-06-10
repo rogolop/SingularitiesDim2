@@ -1,5 +1,5 @@
 {
-  BasePoints.m
+  LogResolution.m
   Filtration.m
   IntegralClosure.m
   Jacobian.m

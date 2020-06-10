@@ -4,18 +4,18 @@ import "ProximityMatrix.m": ProximityMatrixImpl,
                             CoefficientsVectorBranch;
 import "IntegralClosure.m": IntegralClosureIrreducible,
                             Unloading, ProductIdeals,
-                            ClusterFactorization, Curvettes;
-import "BasePoints.m": ExpandWeightedCluster;
+                            ClusterFactorization, MaxContactElements;
+import "LogResolution.m": ExpandWeightedCluster;
 import "SemiGroup.m": TailExponentSeries;
 
 // Helper funcition
 ConvertToIdeal := func<I, Q | [&*[g[1]^g[2] : g in f] : f in I]>;
 
 FiltrationRuptureImpl := function(P, e, c, i, niBi)
-  // Compute the curvettes of the curve.
+  // Compute a set of max. cont. elem. of the curve.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex"); ZZ := Integers();
   Pt := Transpose(P); Pt_inv := Pt^-1;
-  Cv := Curvettes(P, e*Pt_inv, c, Q); N := Ncols(P);
+  Cv := MaxContactElements(P, e*Pt_inv, c, Q); N := Ncols(P);
   // Compute the maximal ideal values.
   max := ZeroMatrix(IntegerRing(), 1, N); max[1][1] := 1; max := max*Pt_inv;
 
@@ -69,9 +69,9 @@ FiltrationImpl := function(s, f, e, M)
   P := ProximityMatrixBranch(s, N); Pt := Transpose(P); Pt_inv := Pt^-1;
   e := MultiplicityVectorBranch(s, N); c := CoefficientsVectorBranch(s, N);
 
-  // Compute the curvettes of the curve.
+  // Compute a set of max. cont. elem. of the curve.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
-  Cv := Curvettes(P, e*Pt_inv, c, Q);
+  Cv := MaxContactElements(P, e*Pt_inv, c, Q);
   // Compute the maximal ideal values.
   max := ZeroMatrix(IntegerRing(), 1, N); max[1][1] := 1; max := max*Pt_inv;
 
@@ -117,10 +117,10 @@ TjurinaFiltrationImpl := function(S, f)
   // The Tjurina ideal & its standard basis.
   J := JacobianIdeal(f) + ideal<R | f>; J := ideal<R | StandardBasis(J)>;
 
-  // Compute the curvettes of the curve.
+  // Compute a set of max. cont. elem. of the curve.
   A := Parent(C[1][1][2]); Q := LocalPolynomialRing(A, 2, "lglex");
-  vi := E[1]*Pt_inv; Cv := Curvettes(P, vi, C[1], Q); ZZ := IntegerRing();
-  // Add the curve itself as a curvette.
+  vi := E[1]*Pt_inv; Cv := MaxContactElements(P, vi, C[1], Q); ZZ := IntegerRing();
+  // Add the curve itself as a max. contact element.
   Cvf := <[<Q!f, 1>], vi, E[1]>; Cv cat:= [Cvf];
   // Compute the maximal ideal values.
   max := ZeroMatrix(ZZ, 1, N); max[1][1] := 1; max := max*Pt_inv;
@@ -136,10 +136,10 @@ TjurinaFiltrationImpl := function(S, f)
       // Expand (i.e. blow-up an extra point) the maximal ideal.
       max := ZeroMatrix(ZZ, 1, N); max[1][1] := 1; max := max*Pt_inv;
 
-      newCv := []; // Expand (i.e. blow-up an extra points) the curvettes.
+      newCv := []; // Expand (i.e. blow-up an extra points) the max. cont. elem.
       for i in [1..#Cv] do
         Ei := InsertBlock(ZeroMatrix(ZZ, 1, N), Cv[i][3], 1, 1);
-        if i eq #Cv then Ei[1][N] := 1; end if; // The last curvette is f.
+        if i eq #Cv then Ei[1][N] := 1; end if; // The last max. cont. elem. is f.
         newCv cat:= [<Cv[i][1], Ei*Pt_inv, Ei>];
       end for; Cv := newCv;
     else ei[1][I[1]] := 1; end if;

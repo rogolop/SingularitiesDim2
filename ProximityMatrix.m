@@ -251,6 +251,7 @@ end intrinsic;
 intrinsic ProximityMatrix(G::[RngIntElt] : ExtraPoint := false) -> []
 { Computes the proximity matrix of the resolution of a plane curve
   with semigroup G }
+
   ZZ := Integers(); N := Gcd(G); G := [ZZ!(g/N) : g in G];
   require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
   C := CharExponents(G) cat []; n := C[1][2]; I := [];
@@ -267,6 +268,7 @@ end intrinsic;
 
 intrinsic ContactMatrix(f::RngMPolLocElt) -> []
 { Computes de contact numbers of the branches of f }
+
   S := PuiseuxExpansion(f);
   P, E := ProximityMatrixImpl(S); N := Ncols(P);
   C := ScalarMatrix(#S, 0);

@@ -30,6 +30,7 @@ intrinsic PuiseuxExpansion(L::[RngMPolLocElt] : Terms := -1,
 require #L gt 0: "Argument must be a non-empty list";
 require &and[Rank(Parent(f)) eq 2 : f in L]:
   "Elements of L must be bivariate polynomials";
+
   f := &*L;
   P<x, y> := LocalPolynomialRing(AlgebraicClosure(
     CoefficientRing(Parent(f))), 2, "lglex");
@@ -39,8 +40,8 @@ require &and[Rank(Parent(f)) eq 2 : f in L]:
 
   sqFreePart := P!SquarefreePart(f); sqFreeFact := [];
   for i in [1..#L] do
-    sqFreeFact cat:= [<P!g[1], g[2], i>: g in SquarefreeFactorization(L[i]) |
-      Evaluate(L[i], <0, 0>) eq 0];
+    sqFreeFact cat:= [<P!g[1], g[2], i>: g in SquarefreeFactorization(L[i])
+      | Evaluate(L[i], <0, 0>) eq 0];
   end for;
   S := yBranch cat SequenceToList(PuiseuxExpansionLoop(sqFreePart,
     sqFreeFact, Terms - 1));
@@ -89,6 +90,7 @@ intrinsic PuiseuxExpansionReduced(f::RngMPolLocElt : Terms := -1,
                                                      Polynomial := false) -> [ ]
 { Computes the Puiseux expansion of a reduced bivariate polynomial }
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
+
   P := LocalPolynomialRing(AlgebraicClosure(
     CoefficientRing(Parent(f))), 2, "lglex");
   // If Nf start on the right of the x-axis, we have an x-factor.
@@ -100,10 +102,10 @@ require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
 end intrinsic;
 
 intrinsic PuiseuxExpansionExpandReduced(s::RngSerPuisElt, f::RngMPolLocElt
-                                             : Terms := 1,
-                                               Polynomial := false) -> [ ]
+                                      : Terms := 1, Polynomial := false) -> [ ]
 { Expands the Puiseux expansion s of a reduced bivariate polynomial }
 require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
+
   n := ExponentDenominator(s); x := Parent(s).1;
   m := s eq 0 select 0 else Degree(s);
 
@@ -116,10 +118,10 @@ require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
 end intrinsic;
 
 intrinsic PuiseuxExpansionExpandReduced(x::RngMPolLocElt, f::RngMPolLocElt
-                                              : Terms := 1,
-                                                Polynomial := false) -> [ ]
+                                      : Terms := 1, Polynomial := false) -> [ ]
 { Expands the Puiseux expansion s of a reduced bivariate polynomial }
 require Rank(Parent(f)) eq 2: "Argument f must be a bivariate polynomial";
+
   if Polynomial then return [<x, x>]; else return [x]; end if;
 end intrinsic;
 

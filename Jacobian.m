@@ -52,7 +52,7 @@ require mu ne Infinity(): "Argument must be an isolated singularity.";
   return Reverse(Setseq(F(MonomialBasis(RJ))));
 end intrinsic;
 
-// By the Briançon-Skoda theorem, for every every hypersurface defining
+// By the Briancon-Skoda theorem, for every every hypersurface defining
 // an isolated singularity there exists a minimal kappa such that
 // f^kappa belong to the Jacobian ideal.
 intrinsic JacobianPower(f::RngMPolLocElt) -> RngIntElt
@@ -85,7 +85,7 @@ end intrinsic;
 intrinsic TjurinaAlgebraAdapted(f::RngMPolLocElt) -> []
 { An adapted basis for the Tjurina algebra }
   R := Parent(f); g := Rank(R); G := SemiGroup(f);
-  Nu1, Nu2 := TjurinaGaps(f); Cv := Curvettes(f); B := [];
+  Nu1, Nu2 := TjurinaGaps(f); Cv := MaxContactElements(f); B := [];
   for alpha in Nu1 cat Nu2 do
     _, b := SemiGroupMembership(alpha, G); B cat:= [b];
   end for; assert(#B eq TjurinaNumber(f));

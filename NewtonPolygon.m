@@ -14,6 +14,7 @@ end function;
 intrinsic NewtonPolygon(f::RngMPolLocElt) -> SeqEnum
 { The newton polygon for the bivariate polynomial f. }
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
+
   NP := [];
   for p in Sort([Exponents(m) : m in Monomials(f)]) cat [[Infinity(), 0]] do
     while #NP ge 2 and CcwTurn(NP[#NP - 1], NP[#NP], p) do
@@ -46,6 +47,7 @@ end procedure;
 intrinsic NewtonSides(f::RngMPolLocElt, NP::SeqEnum) -> SeqEnum
 { Returns the sides of the Newton polygon. }
 require Rank(Parent(f)) eq 2: "Argument must be a bivariate polynomial";
+
   S := [];
   for i in [1..#NP-1] do
     NewtonSide(NP[i], NP[i+1], ~f, ~S);

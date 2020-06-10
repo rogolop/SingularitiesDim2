@@ -33,6 +33,7 @@ intrinsic CharExponents(G::[RngIntElt] : Plane := true) -> []
 if Plane eq true then
   require IsPlaneCurveSemiGroup(G): "G is not the semigroup of a plane curve";
 end if;
+
   M := [G[1]]; N := [G[1]];
   for i in [2..#G] do
     M cat:= [ &+[j ne i select -(N[j - 1] - N[j]) div N[i - 1] * M[j]
@@ -74,6 +75,7 @@ end intrinsic;
 intrinsic SemiGroup(s::RngSerPuisElt) -> []
 { Computes a minimal set of generators for the semigroup of the
   Puiseux series of an irreducible plane curve }
+
   M := CharExponents(s); // (G)amma starts with <n, m, ...>
   return SemiGroup(M[1][2], [M[i][1] : i in [2..#M]]);
 end intrinsic;
@@ -81,6 +83,7 @@ end intrinsic;
 intrinsic SemiGroup(f::RngMPolLocElt) -> []
 { Computes a minimal set of generators for the semigroup of
   and irreducible plane curve }
+
   S := PuiseuxExpansion(f);
   if #S ne 1 then error "Argument must be an irreducible series"; end if;
   if S[1][2] ne 1 then error "Argument must be a reduced series"; end if;
@@ -125,6 +128,7 @@ end procedure;
 intrinsic SemiGroupMembership(v::RngIntElt, G::[RngIntElt]) -> BoolElt
 { Returns whether or not an integer v belongs to a numerical semigroup G and
   the coordinates v in the semigroup }
+
   V := [0 : i in [1..#G]];
   if v lt 0 then return false, V; end if;
   // Any semigroup is valid.
@@ -151,6 +155,7 @@ end function;
 
 intrinsic IsPlaneCurveSemiGroup(G::[RngIntElt]) -> BoolElt
 { Whether the semigroup is a plane curve semigroup or not }
+
   if Gcd(G) ne 1 then return false; end if;
   // e_i := gcd(\bar{m}_{i-1}, \bar{m}_i)
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
@@ -176,6 +181,7 @@ end intrinsic;
 intrinsic Conductor(G::[RngIntElt]) -> RngIntElt
 { Returns the conductor of the semigroup G }
 require IsPlaneCurveSemiGroup(G): "Argument must be a plane curve semigroup";
+
   E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
   N := [E[i - 1] div E[i] : i in [2..#G]]; g := #G - 1; n := G[1];
   return &+[(N[i] - 1) * G[i + 1] : i in [1..g]] - n + 1;
@@ -183,16 +189,19 @@ end intrinsic;
 
 intrinsic Conductor(n::RngIntElt, M::[RngIntElt]) -> RngIntElt
 { Returns the conductor of the char. exponents (n, M) }
+
   return Conductor(SemiGroup(n, M));
 end intrinsic;
 
 intrinsic Conductor(s::RngSerPuisElt) -> RngIntElt
 { Returns the conductor of the Puiseux series s }
+
   return Conductor(SemiGroup(s));
 end intrinsic;
 
 intrinsic Conductor(f::RngMPolLocElt) -> RngIntElt
 { Returns the conductor of the irreducible plane curve f }
+
   return Conductor(SemiGroup(f));
 end intrinsic;
 
@@ -210,6 +219,7 @@ end function;
 
 intrinsic SemiGroupCoord(v::RngIntElt, G::[RngIntElt]) -> []
 { Return the coordinates of an integer v in the numerical semigroup G }
+
   return SemiGroupCoordImpl(v, 1, G);
 end intrinsic;
 
@@ -217,6 +227,7 @@ intrinsic SemiGroup(L::[SeqEnum]) -> []
 { Constructs a semigroup from the semigroup of each characteristic exponent }
 require #L ne 0: "List must be non-empty";
 require &and[#S eq 2 : S in L]: "Input semigroup must have two elements";
+
   P := ProximityMatrix(L[1]); ZZ := Integers();
   for i in [2..#L] do
     Qi := ProximityMatrix(L[i]); N := Ncols(P); Ni := Ncols(Qi);

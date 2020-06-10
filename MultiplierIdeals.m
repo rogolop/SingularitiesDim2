@@ -30,7 +30,7 @@ end intrinsic;
 intrinsic MultiplierIdeals(f::RngMPolLocElt : MaxJN := 1) -> []
 { Computes the Multiplier Ideals and its associated Jumping Number for an
   plane curve in a smooth complex surface using the algorithm
-  of Alberich-Àlvarez-Dachs }
+  of Alberich-Alvarez-Dachs }
 
   P, E, C := ProximityMatrix(f: Coefficients := true); QQ := Rationals();
   EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;
@@ -49,10 +49,10 @@ end intrinsic;
 intrinsic MultiplierIdeals(I::RngMPolLoc : MaxJN := 1) -> []
 { Computes the Multiplier Ideals and its associated Jumping Number for an
   m-primary ideal in a smooth complex surface using the algorithm
-  of Alberich-Àlvarez-Dachs }
+  of Alberich-Alvarez-Dachs }
 require Gcd(Basis(I)) eq 1: "Ideal must be m-primary";
 
-  P, F, _, C := BasePoints(I: Coefficients := true); QQ := Rationals();
+  P, F, _, C := LogResolution(I: Coefficients := true); QQ := Rationals();
   F := ChangeRing(Matrix(F), QQ); PQ := ChangeRing(P, QQ); ZZ := Integers();
   PQTinv := Transpose(PQ)^-1; k := Universe(Basis(I)); N := Ncols(P);
   // Compute relative canonical divisor

@@ -1,24 +1,10 @@
 import "SemiGroup.m": Euclides, TailExponentMatrix, InversionFormula;
 
 // Given a Puiseux series s, returns its associated Weierstrass equation.
-intrinsic WeierstrassEquationCyclotomic(s::RngSerPuisElt, Q::RngMPolLoc) ->
+intrinsic WeierstrassEquation(s::RngSerPuisElt, Q::RngMPolLoc) ->
   RngMPolLocElt
 { Computes the Weierstrass equation associated to a Puiseux series }
-require Type(CoefficientRing(Parent(s))) eq FldAC:
-  "Argument's coefficient ring must be an algebraically closed field";
-  x := Q.1; y := Q.2;
-  C, n, m := Coefficients(s); zeta := RootOfUnity(n, BaseRing(Q));
 
-  S := [&+[Q | C[i] * zeta^(j * (m + i - 1)) * x^(m + i - 1) :
-    i in [1..#C]] : j in [1..n]];
-  return &+[LeadingCoefficient(T) * x^(Exponents(T)[1] div n)
-   * y^(Exponents(T)[2]) : T in Terms(&*[y - s : s in S])];
-end intrinsic;
-
-// Given a Puiseux series s, returns its associated Weierstrass equation.
-intrinsic WeierstrassEquationDeterminant(s::RngSerPuisElt, Q::RngMPolLoc) ->
-  RngMPolLocElt
-{ Computes the Weierstrass equation associated to a Puiseux series }
   x := Q.1; y := Q.2; C, m, n := Coefficients(s); G := CyclicGroup(n);
   g := n gt 1 select G.1^(n - 1) else G.0;
 
@@ -62,14 +48,14 @@ SharplyCurve := function(P, v, c, Q)
     mj := M[i - 1][1]; nj := M[i - 1][2]; mi := M[i][1]; h0 := (mi - mj) div nj;
     s +:= &+[P | c[k + l][2] * t^((mj + l * nj) / n) : l in [0..h0]];
     k +:= &+Euclides(mi - mj, nj)[1];
-  end for; return WeierstrassEquationDeterminant(s, Q)^m;
+  end for; return WeierstrassEquation(s, Q)^m;
 end function;
 
-// Computes the curvettes a weighted cluster.
-Curvettes := function(P, v, c, Q)
+// Computes the maximal contact elements of a weighted cluster.
+MaxContactElements := function(P, v, c, Q)
   P_inv := P^-1; Pt := Transpose(P); Pt_inv := Transpose(P_inv);
   n := Ncols(P); isSat := &+[Pt[i] : i in [1..n]];
-  // 'Curvette' points are always free.
+  // Dead-end points are always free.
   freePoints := [p : p in [1..n] | isSat[p] eq 0]; curvPoints := [];
   for p in freePoints do
     // Points proximate to 'p'.
@@ -80,7 +66,7 @@ Curvettes := function(P, v, c, Q)
     // all its proximate points in K are satellite (rupture point).
     if #prox_p eq 0 or #prox_p eq #prox_p_sat then
       curvPoints cat:= [p]; end if;
-  end for; C := []; // Now, construct equations for each curvette.
+  end for; C := []; // Now, construct equations for each max. cont. elem.
   for p in curvPoints do
     i_p := ZeroMatrix(IntegerRing(), 1, n); i_p[1][p] := 1;
     e_p := i_p*P_inv; Ip := [i : i in [1..n] | e_p[1][i] ne 0];
@@ -88,9 +74,9 @@ Curvettes := function(P, v, c, Q)
       Submatrix(v_p, [1], Ip), c[Ip], Q);
     C cat:= [<[<f_p, 1>], v_p, e_p>];
   end for;
-  // Let's check if we need to add x or y as a curvette. This will always
-  // happen in the irreducible case. Otherwise, we might have smooth curvettes
-  // playing the role of x and/or y.
+  // Let's check if we need to add x or y as a max. cont. elem. This will always
+  // happen in the irreducible case. Otherwise, we might have smooth max. cont.
+  // elem. playing the role of x and/or y.
   e_O := ZeroMatrix(IntegerRing(), 1, n); e_O[1][1] := 1; v_O := e_O*Pt_inv;
   if #[f : f in C | LeadingMonomial(f[1][1][1]) eq Q.1] eq 0 then
     C := [<[<Q.1, 1>], v_O, e_O>] cat C; end if;
@@ -99,8 +85,7 @@ Curvettes := function(P, v, c, Q)
   return C;
 end function;
 
-// Unloads the weighted cluster represented by (P, v) where
-// v are virtual values.
+// Unloads the weighted cluster represented by (P, v) where v are virtual values.
 Unloading := function(P, v)
   N := Transpose(P) * P; n := Ncols(P); R := CoefficientRing(P);
   while #[r : r in Eltseq(v * N) | r lt 0] gt 0 do
@@ -113,27 +98,27 @@ Unloading := function(P, v)
 end function;
 
 // Returns the datum corresponding to multipling the datum of the
-// curvettes f and g.
-ProductCurvettes := function(f, g)
+// max. contact elements of f and g.
+ProductMaxContElem := function(f, g)
   fg := f[1] cat g[1]; S := {h[1] : h in fg};
   return <[<s, &+[h[2] : h in fg | h[1] eq s]> : s in S],
     f[2] + g[2], f[3] + g[3]>;
 end function;
 
 // Returns the datum corresponding to raising the datum representing
-// the curvette f to alpha \in \mathbb{N}.
-PowerCurvette := function(f, alpha)
+// the max. cont. elem. f to alpha \in \mathbb{N}.
+PowerMaxContElem := function(f, alpha)
   return <[<f_i[1], alpha * f_i[2]> : f_i in f[1]], alpha * f[2], alpha * f[3]>;
 end function;
 
-// Multiplies together all the 'ideals' of curvettes in the sequence S.
+// Multiplies together all the 'ideals' of max. cont. elem. in the sequence S.
 ProductIdeals := function(S)
 if #S eq 0 then return []; end if;
-return Reverse([i gt 1 select SetToSequence({ProductCurvettes(f, g) :
+return Reverse([i gt 1 select SetToSequence({ProductMaxContElem(f, g) :
     f in S[i], g in Self(i - 1)}) else S[1] : i in [1..#S]])[1];
 end function;
 
-// Raises the 'ideal' of curvettes to the alpha-th power.
+// Raises the 'ideal' of max. cont. elem. to the alpha-th power.
 PowerIdeal := function(I, alpha)
   return Reverse([i gt 1 select ProductIdeals([I] cat [Self(i - 1)])
     else I : i in [1..alpha]])[1];
@@ -143,7 +128,7 @@ forward IntegralClosureIrreducible;
 
 IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
   // If the cluster is a power of the maximal ideal, select all the
-  // possible generators for a maximal ideal from the curvettes.
+  // possible generators for a maximal ideal from the max. cont. elem.
   alpha := Gcd(Eltseq(v_i)); v_i := v_i div alpha;
   if v_i eq max then
     X := [f : f in Cv | LeadingMonomial(f[1][1][1]) eq Q.1];
@@ -153,7 +138,7 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
     return PowerIdeal([X[i1], Y[i2]], alpha);
   end if;
 
-  // Find the curvettes going through the current cluster.
+  // Find the max. cont. elem. going through the current cluster.
   Pt := Transpose(P); n := Ncols(P); isFree := &+[Pt[i] : i in [1..n]];
   e_i := v_i*Pt; p := [j : j in Reverse([1..n]) | isFree[j] eq 0 and
     e_i[1][j] ne 0][1]; // Last free point.
@@ -167,24 +152,24 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
     v_j in ClusterFactorization(P, v)];
 
   // Compute (f^\beta) + \prod_{i=1}^{#II} I_i and clean gens.
-  return PowerIdeal([PowerCurvette(Fs, beta)] cat [g : g in ProductIdeals(Is)
+  return PowerIdeal([PowerMaxContElem(Fs, beta)] cat [g : g in ProductIdeals(Is)
     | &or[g[2][1][i] lt (v_i + max)[1][i] : i in [1..n]]], alpha);
 end function;
 
 intrinsic IntegralClosure(I::RngMPolLoc : Ideal := true) -> []
 { Computes the integral closure of a bivariate polynomial ideal }
-  // Compute the weighted cluster of base points.
-  P, v, f, c := BasePoints(I : Coefficients := true);
+  // Compute the log-resolution of I
+  P, v, f, c := LogResolution(I : Coefficients := true);
   Pt := Transpose(P); n := Ncols(P); R := Parent(f);
   // If the ideal is principal its integral closure is itself.
   if n eq 0 then
     if Ideal then return ideal<R | f>; else return [[<R!f, 1>]]; end if;
   end if;
 
-  // Compute the curvettes of the weighted cluster of base points.
+  // Compute the maximal contact elements of the log-resolution morphism.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
-  Cv := Curvettes(P, v, c, Q); e := P*Transpose(v);
-  // Sort curvettes by increasing intersection multiplicity with BP(I).
+  Cv := MaxContactElements(P, v, c, Q); e := P*Transpose(v);
+  // Sort max. contact elements by increasing intersection mult. with F_\pi.
   Sort(~Cv, func<x, y | (y[3]*e - x[3]*e)[1][1]>);
   // Compute the maximal ideal values.
   max := ZeroMatrix(IntegerRing(), 1, n); max[1][1] := 1; max := max*Pt^-1;
@@ -196,18 +181,19 @@ intrinsic IntegralClosure(I::RngMPolLoc : Ideal := true) -> []
   Ibar := [g[1] cat (f eq 1 select [] else [<Q!f, 1>]) : g in ProductIdeals(Is)
     | &or[g[2][1][i] lt (v + max)[1][i] : i in [1..n]]];
 
-  // Return the internal representation of the monomials in the curvettes
-  // or return a sequence of ideals instead.
+  // Return the internal representation of the monomials in the max. contact
+  // elements or return a sequence of ideals instead.
   ConvertToIdeal := func<I, Q | [Q!(&*[g[1]^g[2] : g in f]) : f in I]>;
   if Ideal then return ConvertToIdeal(Ibar, R); else return Ibar; end if;
 end intrinsic;
 
-// Computes the curvettes of an element f.
-intrinsic Curvettes(f::RngMPolLocElt) -> []
-{ Computes the curvettes (a.k.a. maximal contact elements) of a plane curve f }
+// Computes a set of maximal contact elements of an element f.
+intrinsic MaxContactElements(f::RngMPolLocElt) -> []
+{ Computes a set of maximal contact elements of a plane curve f }
+
   P, e, c := ProximityMatrix(f : Coefficients := true); R := Parent(f);
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2); Pt := Transpose(P);
-  return [R!fi[1][1][1] : fi in Curvettes(P, e*Pt^-1, c, Q)];
+  return [R!fi[1][1][1] : fi in MaxContactElements(P, e*Pt^-1, c, Q)];
 end intrinsic;
 
 // Computes generators for \pi^* O_{X'}(-D)_O
@@ -216,10 +202,10 @@ intrinsic GeneratorsOXD(P::Mtrx, v::Mtrx, c::SeqEnum[Tup], R::RngMPolLoc) -> []
   associated to the divisor D given by the values in v}
 require Ncols(P) eq Ncols(v) and Ncols(P) eq #c: "Dimensions do not agree";
 
-  // Compute the curvettes of the weighted cluster of base points.
+  // Compute the maximal contact elements of the morphism.
   Q<x, y> := LocalPolynomialRing(Parent(c[1][2]), 2, "lglex");
-  Cv := Curvettes(P, v, c, Q); e := P*Transpose(v);
-  // Sort curvettes by increasing intersection multiplicity with BP(I).
+  Cv := MaxContactElements(P, v, c, Q); e := P*Transpose(v);
+  // Sort max. contact elements by increasing intersection multiplicity with D.
   Sort(~Cv, func<x, y | (y[3]*e - x[3]*e)[1][1]>); n := Ncols(P);
   // Compute the maximal ideal values.
   max := ZeroMatrix(IntegerRing(), 1, n); max[1][1] := 1;
