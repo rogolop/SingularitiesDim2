@@ -86,8 +86,8 @@ MaxContactElements := function(P, v, c, Q)
 end function;
 
 // Unloads the weighted cluster represented by (P, v) where v are virtual values.
-Unloading := function(P, v)
-  N := Transpose(P) * P; n := Ncols(P); R := CoefficientRing(P);
+Unloading := function(N, v)
+  n := Ncols(N); R := CoefficientRing(N);
   while #[r : r in Eltseq(v * N) | r lt 0] gt 0 do
     p := [i : i in [1..n] | (v * N)[1][i] lt 0][1];
     lp := ZeroMatrix(R, 1, n); lp[1][p] := 1;
@@ -143,10 +143,10 @@ IntegralClosureIrreducible := function(P, e, v_i, Cv, max, Q)
   e_i := v_i*Pt; p := [j : j in Reverse([1..n]) | isFree[j] eq 0 and
     e_i[1][j] ne 0][1]; // Last free point.
   Fs := [f : f in Cv | f[3][1][p] gt 0 and f[3][1][1] le v_i[1][1]][1];
-  beta := v_i[1][1] div Fs[3][1][1];
+  beta := v_i[1][1] div Fs[3][1][1]; N := Pt*P;
 
   // Increase the value at the origin & unload.
-  v := v_i; v[1][1] +:= 1; v := Unloading(P, v);
+  v := v_i; v[1][1] +:= 1; v := Unloading(N, v);
   // Apply Zariski theorem on complete ideals and recurse.
   Is := [IntegralClosureIrreducible(P, e, v_j, Cv, max, Q) :
     v_j in ClusterFactorization(P, v)];
