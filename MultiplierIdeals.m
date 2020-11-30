@@ -38,7 +38,7 @@ intrinsic MultiplierIdeals(f::RngMPolLocElt : MaxJN := 1) -> []
   EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;
   n := Ncols(P); F := EQ*PQTinv; K := Matrix([[QQ | 1 : i in [1..n]]]);
   // Compute relative canonical divisor.
-  K := K * PQTinv; ZZ := Integers(); k := Parent(f);
+  K := K*PQTinv; ZZ := Integers(); k := Parent(f);
 
   // Compute the extended intersection matrix by the stict transform components.
   N := Transpose(PQ)*PQ; StrF := EQ*PQ;
@@ -62,13 +62,15 @@ intrinsic MultiplierIdeals(I::RngMPolLoc : MaxJN := 1) -> []
 { Computes the Multiplier Ideals and its associated Jumping Number for an
   m-primary ideal in a smooth complex surface using the algorithm
   of Alberich-Alvarez-Dachs }
+// TODO: Fix this requiriment. This would involve getting the proximity matrix
+// of a non m-primary ideal. This means merging the affine part resolution.
 require Gcd(Basis(I)) eq 1: "Ideal must be m-primary";
 
   P, F, _, C := LogResolution(I: Coefficients := true); QQ := Rationals();
   F := ChangeRing(Matrix(F), QQ); PQ := ChangeRing(P, QQ); ZZ := Integers();
   PQTinv := Transpose(PQ)^-1; k := Universe(Basis(I)); n := Ncols(P);
   // Compute relative canonical divisor.
-  K := Matrix([[QQ | 1 : i in [1..n]]]); K := K * PQTinv;
+  K := Matrix([[QQ | 1 : i in [1..n]]]); K := K*PQTinv;
   // Compute the intersection matrix
   N := Transpose(PQ)*PQ;
 
@@ -81,6 +83,21 @@ require Gcd(Basis(I)) eq 1: "Ideal must be m-primary";
   end while; return S;
 end intrinsic;
 
+intrinsic AdjointIdeal(f::RngMPolLocElt) -> []
+{ Computes the adjoint ideal of a plane curve }
+  P, E, C := ProximityMatrix(f: Coefficients := true); QQ := Rationals();
+  EQ := ChangeRing(E, QQ); PQ := ChangeRing(P, QQ); PQTinv := Transpose(PQ)^-1;
+  n := Ncols(P); F := EQ*PQTinv; K := Matrix([[QQ | 1 : i in [1..n]]]);
+  // Compute relative canonical divisor.
+  K := K*PQTinv; ZZ := Integers(); k := Parent(f);
+  // Compute the intersection matrix.
+  N := Transpose(PQ)*PQ;
+
+  JN := 1; S := [];
+  D := Unloading(N, Matrix([[QQ | Floor(ei) : ei in Eltseq(JN*F - K)]]));
+  return GeneratorsOXD(P, ChangeRing(D, ZZ), C, k);
+end intrinsic;
+
 intrinsic TopologicalRootsBS(G::[RngIntElt]) -> []
 { Compute the topological roots of the Bernstein-Sato polynomial of a
   topological class given by the semigroup G }
@@ -88,7 +105,7 @@ intrinsic TopologicalRootsBS(G::[RngIntElt]) -> []
   P, E := ProximityMatrix(G); QQ := Rationals(); ZZ := Integers();
   n := Ncols(P); P := ChangeRing(P, QQ); Pt := Transpose(P);
   E := ChangeRing(E, QQ); PTinv := Pt^-1; F := E*PTinv;
-  K := Matrix([[QQ | 1 : i in [1..n]]]); K := K * PTinv; N := Pt*P;
+  K := Matrix([[QQ | 1 : i in [1..n]]]); K := K*PTinv; N := Pt*P;
 
   VS := RSpace(ZZ, n); R := []; isSat := &+[VS | Pt[i] : i in [1..n]];
   for p in [2..n] do // Construct the set of rupture points.
