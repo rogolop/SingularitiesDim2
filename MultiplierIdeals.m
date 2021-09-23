@@ -27,6 +27,31 @@ intrinsic JumpingNumbers(n::RngIntElt, M::[RngIntElt]) -> []
   G := SemiGroup(n, M); return JumpingNumbers(G);
 end intrinsic;
 
+intrinsic PolesZetaFunction(G::[RngIntElt]) -> []
+{ Compute the poles of the motivic Zeta function of an irreducible plane curve
+  from its semigroup }
+require IsPlaneCurveSemiGroup(G): "G must be the semigroup of a plane curve";
+
+  E := [i gt 1 select Gcd(Self(i - 1), G[i]) else G[1] : i in [1..#G]];
+  N := [E[i - 1] div E[i] : i in [2..#G]];
+  M := CharExponents(G);
+
+  g := #G - 1; P := []; ZZ := Integers();
+  for i in [1..g] do
+    Gi := [ZZ!(beta / E[i + 1]) : beta in G[1..(i + 1)]];
+    Mi := CharExponents(Gi);
+    P cat:= [-(Mi[i + 1][1] + &*N[1..i])/(N[i]*G[i + 1])];
+  end for; return P;
+
+end intrinsic;
+
+intrinsic PolesZetaFunction(n::RngIntElt, M::[RngIntElt]) -> []
+{ Compute the poles of the motivic Zeta function of an irreducible plane curve
+  from its semigroup }
+
+  G := SemiGroup(n, M); return PolesZetaFunction(G);
+end intrinsic;
+
 intrinsic MultiplierIdeals(f::RngMPolLocElt : MaxJN := 1) -> []
 { Computes the Multiplier Ideals and its associated Jumping Number for an
   plane curve in a smooth complex surface using the algorithm
