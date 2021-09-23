@@ -235,3 +235,32 @@ require &and[#S eq 2 : S in L]: "Input semigroup must have two elements";
     InsertBlock(~P, Qi, N, N);
   end for; return SemiGroup(P);
 end intrinsic;
+
+SigmaFunction := function(k)
+  if IsEven(k) then return ((k - 2)*(k - 4))/4;
+  else return (k - 3)^2/4; end if;
+end function;
+
+intrinsic MinimalTjurina(G) -> RngIntElt
+{ The minimal Tjurina number of the topological type given by the semigroup G }
+  P, e := ProximityMatrix(G);
+  isFree := &+[Transpose(P)[i] : i in [1..Ncols(P)]];
+  n := G[1]; e := e[1];
+  tauMin := SigmaFunction(n) + (n^2 + 3*n - 6)/2;
+  for i in [2..Ncols(P)] do
+    if isFree[i] eq 0 then tauMin := tauMin + ((e[i] - 1)*(e[i] + 2) + 2*SigmaFunction(e[i] + 1))/2;
+    else tauMin := tauMin + (e[i]*(e[i] - 1) + 2*SigmaFunction(e[i] + 2))/2; end if;
+  end for; return tauMin;
+end intrinsic;
+
+intrinsic GenericDimensionModuli(G) -> RngIntElt
+{ The minimal Tjurina number of the topological type given by the semigroup G }
+  P, e := ProximityMatrix(G);
+  isFree := &+[Transpose(P)[i] : i in [1..Ncols(P)]];
+  n := G[1]; e := e[1];
+  qG := SigmaFunction(n);
+  for i in [2..Ncols(P)] do
+    if isFree[i] eq 0 then qG := qG + SigmaFunction(e[i] + 1);
+    else qG := qG + SigmaFunction(e[i] + 2); end if;
+  end for; return qG;
+end intrinsic;
