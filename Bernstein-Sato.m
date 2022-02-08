@@ -159,34 +159,93 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
   for pi in Rup[1..#Rup] do
     // Divisors cutting E_p_i.
     Div := [i : i in [1..N] | E[pi][i] eq 1];
+    // Divisors cutting E_p_i and preceding it in the resolution.
+    DivPre := [i : i in [1..N] | P[pi][i] eq -1];
     // Sharply curve & its semigroup
-    ei := ZeroMatrix(ZZ, 1, N); ei[1][pi] := 1; ei := ei*P^-1;
+    ei := ZeroMatrix(ZZ, 1, N); ei[1][pi] := 1; ei := ei*P^-1; vi := ei*Transpose(P)^-1;
     idx := [j : j in [1..N] | ei[1][j] ne 0];
-    Gi := SemiGroup(Submatrix(P, idx, idx)); g := #Gi - 1;
+    Gi := SemiGroup(Submatrix(P, idx, idx) : UseExtraPoints := true); g := #Gi - 1;
     // Semigroup numerology
     Ei := [j gt 1 select Gcd(Self(j-1), Gi[j]) else Gi[1] : j in [1..#Gi]];
     Ni := [0] cat [ZZ!(Ei[j] div Ei[j + 1]) : j in [1..g]];
+    Mi := [1] cat [ZZ!(Gi[i + 1]/Ei[i + 1]) : i in [1..g]];
     // Maximal contact elements of the sharply curve
     MaxContact := [];
     for gi in Gi do
       qi := [i : i in [1..#DeadEnd] |
         &+[DeadEnd[i][1][j]*ei[1][j] : j in [1..N]] eq gi];
-      if #qi gt 1 then
-        error "Maximal contact elements not unique";
-      end if;
       MaxContact cat:= [DeadEnd[qi[1]]*Transpose(P)^-1];
     end for;
 
-    // Extend the semigroup. One extra "max. contact" for each Div - 2
-    Gi cat:= [Ni[g + 1]*Gi[g + 1] : j in [1..(#Div - 2)]];
-    qi := [i : i in [1..#DeadEnd] |
-      &+[DeadEnd[i][1][j]*ei[1][j] : j in [1..N]] eq Gi[#Gi]];
-    MaxContact cat:= [DeadEnd[qi[j]]*Transpose(P)^-1 : j in [1..#qi]];
+    // Extend the maximal contact elements.
+    //qi := [i : i in [1..#DeadEnd] |
+    //  &+[DeadEnd[i][1][j]*ei[1][j] : j in [1..N]] eq Gi[#Gi]]; // TODO
+    //MaxContact cat:= [DeadEnd[qi[j]]*Transpose(P)^-1 : j in [1..#qi]];
 
-    print "####################";
+    print "#############################################";
     print "Rupture divisor:", pi;
-    print "####################";
-    print "\n";
+    print "#############################################";
+
+    print "";
+    print "Ni:", vF[1, pi];
+    print "Ni irred.:", vi[1, pi];
+    print "SemiGroup Ni:", Gi[1..g + 1];
+    Ci := SemiGroupCoord(vF[1, pi], Gi[1..g + 1]);
+    print "Coords Ni:", Ci[1];
+    print "Coords Ni irred:", SemiGroupCoord(vi[1, pi], Gi[1..g + 1])[1];
+    ni := Ni[g + 1];
+    qi := ZZ!(Gi[g + 1] - ni*Ni[g]*Mi[g]);
+    print "Last Exp.: ", <ni, qi>;
+    print "";
+
+    DivPreType := [];
+    for qj in DivPre do
+      ej := ZeroMatrix(ZZ, 1, N); ej[1][qj] := 1; ej := ej*P^-1;
+      idx := [i : i in [1..N] | ej[1][i] ne 0];
+      Gj := SemiGroup(Submatrix(P, idx, idx) : UseExtraPoints := true);
+      // Extreme case
+      if #Gj ne g + 1 then Gj cat:= [Ni[g]*Gj[g]]; end if;
+
+      Ej := [j gt 1 select Gcd(Self(j-1), Gj[j]) else Gj[1] : j in [1..#Gj]];
+      Nj := [0] cat [ZZ!(Ej[j] div Ej[j + 1]) : j in [1..#Gj - 1]];
+      Mj := [1] cat [ZZ!(Gj[i + 1]/Ej[i + 1]) : i in [1..#Gj - 1]];
+
+      ai := Nj[g + 1];
+      bi := ZZ!(Gj[g + 1] - ai*Nj[g]*Mj[g]);
+
+      if vi[1, qj]/vi[1, pi] eq ai/Ni[g + 1] then
+        print "********** A/B"; DivPreType cat:= ["A/B"];
+        print <ni, qi>;
+        print <ai, bi>;
+        print(ni*ai - qi*bi);
+        //assert(ni*ai - qi*bi eq 1);
+      elif vi[1, qj]/vi[1, pi] eq Gj[g + 1]/Gi[g + 1] then
+        print "********** C/D"; DivPreType cat:= ["C/D"];
+        //assert(ni*ai - qi*bi eq -1);
+        print <ni, qi>;
+        print <ai, bi>;
+        print(ni*ai - qi*bi);
+      else assert(false); end if;
+
+      print "Nj:", vF[1, qj];
+      print "Nj irred:", vi[1, qj];
+      print "SemiGroup Nj:", Gj;
+      print "Coords Nj:", SemiGroupCoord(vF[1, qj], Gj)[1];
+      print "Coords Nj irred:", SemiGroupCoord(vi[1, qj], Gj)[1];
+      if not IsEmpty(Seqset(Ci) meet Seqset(SemiGroupCoord(vF[1, qj], Gj))) then
+        Meet := Seqset(Ci) meet Seqset(SemiGroupCoord(vF[1, qj], Gj));
+        print Meet;
+      elif #DivPre eq 2 then
+        assert(false);
+      end if;
+      print "Last Exp.: ", <ai, bi>;
+      print "";
+
+    end for;
+    print "Nj/Ni:  ", [vF[1, d]/vF[1, pi] : d in DivPre];
+    print "Nj/Ni irred: ", [vi[1, d]/vi[1, pi] : d in DivPre];
+
+    print "";
     print "Topological roots candidates:";
     print "=============================\n";
 
@@ -194,24 +253,43 @@ intrinsic StudySingularity2(f::RngMPolLocElt) -> []
     for nu in GiVals do // For each element in the value group
       sigmaNu := -(vK[1, pi] + nu + 1)/vF[1, pi];
 
-      print "Root:", <nu, sigmaNu>;
-      print "-------------------";
+      //print "Root:", <nu, sigmaNu>;
+      //print "-------------------";
+      bannerPrinted := false;
+
       for C in SemiGroupCoord(nu, Gi) do // For each possible expression of nu
-          print "SemiGroup coordinates:", C;
+      //C := SemiGroupCoord(nu, Gi)[1];
+
           vNu := &+[MaxContact[j]*C[j] : j in [1..#C]]; Eps := [];
-          assert(vNu[1, pi] eq nu); Eps := [];
+          assert(vNu[1, pi] eq nu); Eps := []; Eps0 := [];
           for r in [1..#Div] do // For each divisor cutting Ei
-            eps := vF[1, Div[r]] * sigmaNu + vNu[1, Div[r]] + vK[1, Div[r]];
+            eps := vF[1, Div[r]] * sigmaNu + vK[1, Div[r]];
+            //Eps0 cat:= [eps];
+            eps +:= vNu[1, Div[r]] + 1;
             Eps cat:= [eps];
           end for;
-          print "Epsilons:", Eps;
-          print "Omega values:", [vNu[1, Div[r]] : r in [1..#Div]];
-          if &or[ eps eq -1 : eps in Eps] then print "Pole!";
-          else print "Residue:", 2 - #Div + &+[1/(eps + 1) : eps in Eps]; end if;
-          print "";
-      end for;
-      print "";
 
+          if &or[Denominator(Eps[i]) eq 1 : i in [1..#Div]] and
+            not &or[Denominator(Eps[i]) eq 1 and Eps[i] le 0 : i in [1..#Div]] then
+            idx := [i : i in [1..#DivPre] | Denominator(Eps[i]) eq 1];
+
+            if not bannerPrinted then
+              print "Root:", <nu, sigmaNu>, DivPreType[idx];
+              print "-------------------";
+              bannerPrinted := true;
+            end if;
+
+            print "SemiGroup coordinates:", C;
+            print "Epsilons:", Eps;
+            //print "Epsilons0:", Eps0;
+            //print "Omega values:", [vNu[1, Div[r]] : r in [1..#Div]];
+            print "";
+          end if;
+
+          //if &or[ eps eq -1 : eps in Eps] then print "DOUBLE!";
+          //else print "Residue:", 2 - #Div + &+[1/(eps + 1) : eps in Eps];
+          //end if;
+      end for;
     end for;
 
   end for; return [];
