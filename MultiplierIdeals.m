@@ -68,10 +68,10 @@ intrinsic MultiplierIdeals(f::RngMPolLocElt : MaxJN := 1) -> []
   // Compute the extended intersection matrix by the stict transform components.
   N := Transpose(PQ)*PQ; StrF := EQ*PQ;
   nAffComp := #[1 : i in [1..n] | StrF[1][i] ne 0];
-  N := DiagonalJoin(N, -IdentityMatrix(QQ, nAffComp));
+  N := DiagonalJoin(N, ZeroMatrix(QQ, nAffComp));
   idxAff := [i : i in [1..n] | StrF[1][i] ne 0];
   for i in [1..nAffComp] do N[n + i][idxAff[i]] := -1; end for;
-  F := HorizontalJoin(F, Matrix(QQ, [[1 : i in [1..nAffComp]]]));
+  F := HorizontalJoin(F, Matrix(QQ, [[StrF[1][i] : i in [1..nAffComp]]]));
   K := HorizontalJoin(K, Matrix(QQ, [[0 : i in [1..nAffComp]]]));
 
   JN := 0; S := [];
