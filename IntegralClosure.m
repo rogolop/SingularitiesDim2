@@ -87,6 +87,7 @@ end function;
 
 // Unloads the weighted cluster represented by (P, v) where v are virtual values.
 Unloading := function(N, v)
+  v := Matrix([[Rationals() | Ceiling(elt) : elt in Eltseq(v)]]);
   n := Ncols(N); R := CoefficientRing(N);
   while #[r : r in Eltseq(v * N) | r lt 0] gt 0 do
     p := [i : i in [1..n] | (v * N)[1][i] lt 0][1];
